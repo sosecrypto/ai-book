@@ -38,6 +38,13 @@ const agentInfo: Record<AgentType, { name: string; emoji: string; bgColor: strin
     textColor: 'text-rose-700',
     borderColor: 'border-rose-200',
   },
+  'editor-critic': {
+    name: 'Editor-Critic Agent',
+    emoji: '📝⭐',
+    bgColor: 'bg-orange-50',
+    textColor: 'text-orange-700',
+    borderColor: 'border-orange-200',
+  },
 }
 
 interface AgentActivityPanelProps {
