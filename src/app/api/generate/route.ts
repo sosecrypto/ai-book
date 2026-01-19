@@ -4,6 +4,7 @@ import { runOutlinerAgent, refineOutline, generateTableOfContents } from '@/agen
 import { runWriterAgent } from '@/agents/writer'
 import { runEditorAgent } from '@/agents/editor'
 import { runCriticAgent } from '@/agents/critic'
+import { runEditorCriticLoop, runSinglePassEditorCritic } from '@/agents/editor-critic'
 import { BookType, OutlineFeedback, BookOutline } from '@/types/book'
 
 export async function POST(request: NextRequest) {
@@ -58,6 +59,45 @@ export async function POST(request: NextRequest) {
         const { content, chapterTitle, targetAudience, tone } = body
         const result = await runCriticAgent(content, chapterTitle, targetAudience, tone)
         return NextResponse.json(result)
+      }
+
+      case 'editor-critic': {
+        const {
+          content,
+          chapterTitle,
+          targetAudience,
+          tone,
+          useFeedbackLoop = false,
+          maxIterations = 3,
+          passThreshold = 7
+        } = body as {
+          content: string
+          chapterTitle: string
+          targetAudience: string
+          tone: string
+          useFeedbackLoop?: boolean
+          maxIterations?: number
+          passThreshold?: number
+        }
+
+        if (useFeedbackLoop) {
+          const result = await runEditorCriticLoop(
+            content,
+            chapterTitle,
+            targetAudience,
+            tone,
+            { maxIterations, passThreshold }
+          )
+          return NextResponse.json(result)
+        } else {
+          const result = await runSinglePassEditorCritic(
+            content,
+            chapterTitle,
+            targetAudience,
+            tone
+          )
+          return NextResponse.json(result)
+        }
       }
 
       default:
