@@ -9,17 +9,35 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#4F46E5',
-        secondary: '#7C3AED',
+        parchment: '#fcf5e5', // Creamy paper color
+        ink: '#3a3a3a', // Dark text color
+        sepia: '#704214', // Old-style brown for accents
+        leather: '#8d5b2d', // Book cover leather
+        'gold-leaf': '#d4af37', // Gold accents
+        ribbon: '#a63333', // Bookmark ribbon
+      },
+      fontFamily: {
+        serif: ['Georgia', 'Times New Roman', 'serif'],
       },
       animation: {
-        fadeIn: 'fadeIn 0.3s ease-in-out',
+        'page-flip-right': 'page-flip-right 2.5s cubic-bezier(0, 0, 0.2, 1) forwards',
+        'book-open': 'book-open 1.5s ease-out forwards',
+        'ribbon-peek': 'ribbon-peek 0.5s ease-out forwards',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(-10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+        'page-flip-right': {
+          '0%': { transform: 'perspective(1500px) rotateY(0deg)' },
+          '50%': { transform: 'perspective(1500px) rotateY(-90deg)' },
+          '100%': { transform: 'perspective(1500px) rotateY(-180deg)' },
         },
+        'book-open': {
+          '0%': { transform: 'scaleX(0)' },
+          '100%': { transform: 'scaleX(1)' },
+        },
+        'ribbon-peek': {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(0)' },
+        }
       },
     },
   },

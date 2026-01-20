@@ -14,6 +14,8 @@
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@prisma/client": "^5.22.0",
+    "openai": "^4.73.0",
     "@react-pdf/renderer": "^4.3.2",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.0.9",
@@ -26,5 +28,8 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "zustand": "^5.0.10"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }

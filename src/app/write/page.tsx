@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useBookStore } from '@/lib/store'
 import { BookType, AgentType } from '@/types/book'
 import { ProgressStepper, AgentActivityPanel, LoadingSpinner } from '@/components'
+import { useStreamingGeneration } from '@/hooks/useStreamingGeneration'
 
 const bookTypeNames: Record<BookType, string> = {
   fiction: '소설',
@@ -40,7 +41,11 @@ function WritePageContent() {
     setChapter,
     addAgentMessage,
     setProcessing,
+    saveProject,
+    saveChapterToServer,
   } = useBookStore()
+
+  const { isStreaming, streamedText, startStreaming } = useStreamingGeneration()
 
   const outputRef = useRef<HTMLDivElement>(null)
 
@@ -48,7 +53,7 @@ function WritePageContent() {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight
     }
-  }, [output, agentMessages])
+  }, [output, agentMessages, streamedText])
 
   const markAgentCompleted = (agent: AgentType) => {
     setCompletedAgents((prev) => [...prev.filter((a) => a !== agent), agent])
@@ -135,19 +140,19 @@ function WritePageContent() {
           timestamp: new Date(),
         })
 
-        const writeRes = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            phase: 'write',
-            bookType,
-            outline: outlineData.outline,
-            chapter,
-          }),
-        })
-        const writeData = await writeRes.json()
-        setChapter(chapter.number, writeData.content)
-        setOutput((prev) => prev + `\n\n## 챕터 ${chapter.number}: ${chapter.title}\n\n${writeData.content}`)
+        // Use streaming for chapter writing
+        setOutput((prev) => prev + `\n\n## 챕터 ${chapter.number}: ${chapter.title}\n\n`)
+
+        const chapterContent = await startStreaming(bookType, outlineData.outline, chapter)
+        setChapter(chapter.number, chapterContent)
+        setOutput((prev) => prev + chapterContent)
+
+        // Save chapter to server
+        try {
+          await saveChapterToServer(chapter.number, chapter.title, chapterContent)
+        } catch (saveError) {
+          // Continue even if save fails
+        }
 
         // Edit phase
         setCurrentAgent('editor')
@@ -163,7 +168,7 @@ function WritePageContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             phase: 'edit',
-            content: writeData.content,
+            content: chapterContent,
             chapterTitle: chapter.title,
             tone: outlineData.outline.tone,
           }),
@@ -392,8 +397,13 @@ function WritePageContent() {
                     ref={outputRef}
                     className="prose prose-indigo max-w-none h-[600px] overflow-y-auto p-6 bg-gradient-to-b from-slate-50 to-white rounded-xl border border-gray-100"
                   >
-                    {output ? (
-                      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">{output}</div>
+                    {output || isStreaming ? (
+                      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                        {output}
+                        {isStreaming && (
+                          <span className="text-indigo-600">{streamedText}</span>
+                        )}
+                      </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-gray-400">
                         {isProcessing ? (

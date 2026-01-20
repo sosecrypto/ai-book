@@ -19,6 +19,11 @@ interface BookStore {
   setProcessing: (processing: boolean) => void
   reset: () => void
 
+  // Persistence actions
+  loadProject: (project: BookProject) => void
+  saveProject: () => Promise<void>
+  saveChapterToServer: (chapterNumber: number, title: string, content: string) => Promise<void>
+
   // Outline modification actions
   generateTOC: () => void
   refineOutlineWithFeedback: (feedback: OutlineFeedback) => Promise<void>
@@ -106,6 +111,65 @@ export const useBookStore = create<BookStore>((set, get) => ({
       isProcessing: false,
       tableOfContents: null,
     })
+  },
+
+  loadProject: (project) => {
+    const chaptersMap = new Map<number, string>()
+    project.chapters.forEach((ch) => {
+      chaptersMap.set(ch.number, ch.content)
+    })
+    set({
+      currentProject: project,
+      chapters: chaptersMap,
+      agentMessages: [],
+      tableOfContents: null,
+    })
+    // Generate TOC if outline exists
+    if (project.outline) {
+      const toc = generateTableOfContents(project.title, project.outline)
+      set({ tableOfContents: toc })
+    }
+  },
+
+  saveProject: async () => {
+    const { currentProject } = get()
+    if (!currentProject) return
+
+    try {
+      await fetch(`/api/projects/${currentProject.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: currentProject.title,
+          type: currentProject.type,
+          description: currentProject.description,
+          status: currentProject.status,
+          outline: currentProject.outline,
+        }),
+      })
+    } catch (error) {
+      throw new Error('프로젝트 저장에 실패했습니다.')
+    }
+  },
+
+  saveChapterToServer: async (chapterNumber, title, content) => {
+    const { currentProject } = get()
+    if (!currentProject) return
+
+    try {
+      await fetch(`/api/projects/${currentProject.id}/chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          number: chapterNumber,
+          title,
+          content,
+          status: 'writing',
+        }),
+      })
+    } catch (error) {
+      throw new Error('챕터 저장에 실패했습니다.')
+    }
   },
 
   generateTOC: () => {

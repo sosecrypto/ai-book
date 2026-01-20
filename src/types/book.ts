@@ -114,3 +114,13 @@ export interface ResearchResult {
   sources: string[]
   recommendations: string[]
 }
+
+export interface CoverImage {
+  id: string
+  projectId: string
+  imageUrl: string
+  prompt?: string
+  template?: string
+  createdAt: Date
+  updatedAt: Date
+}
