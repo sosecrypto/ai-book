@@ -342,6 +342,11 @@
 }
 
 @layer utilities {
+  /* 3D perspective utilities */
+  .perspective-\[2000px\] {
+    perspective: 2000px;
+  }
+
   .text-cream { color: var(--cream); }
   .text-cream-light { color: var(--cream-light); }
   .text-beige { color: var(--beige); }
