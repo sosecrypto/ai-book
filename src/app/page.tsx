@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
+import FloatingBookThree from '@/components/FloatingBookThree'
 
 // ============================================================================
 // Types
@@ -21,6 +22,7 @@ interface BookSample {
   author: string
   category: string
   color: string
+  cover?: string
 }
 
 interface Testimonial {
@@ -28,6 +30,7 @@ interface Testimonial {
   quote: string
   author: string
   role: string
+  avatar?: string
 }
 
 // ============================================================================
@@ -92,12 +95,12 @@ const agents: Agent[] = [
 ]
 
 const bookSamples: BookSample[] = [
-  { id: '1', title: '별이 빛나는 밤에', author: 'AI 작가', category: '소설', color: '#704214' },
-  { id: '2', title: '성공하는 습관의 비밀', author: 'AI 작가', category: '자기계발', color: '#2d4a3e' },
-  { id: '3', title: '커피 한 잔의 여유', author: 'AI 작가', category: '에세이', color: '#4a3728' },
-  { id: '4', title: '아이와 함께하는 동화', author: 'AI 작가', category: '동화', color: '#5c4a7d' },
-  { id: '5', title: 'React 마스터하기', author: 'AI 작가', category: '기술서적', color: '#1e3a5f' },
-  { id: '6', title: '마음의 시', author: 'AI 작가', category: '시집', color: '#6b4423' },
+  { id: '6', title: '마음의 시', author: 'AI 작가', category: '시집', color: '#6b4423', cover: '/images/cover_poetry.png' },
+  { id: '2', title: '성공하는 습관의 비밀', author: 'AI 작가', category: '자기계발', color: '#2d4a3e', cover: '/images/cover_habit.png' },
+  { id: '3', title: '커피 한 잔의 여유', author: 'AI 작가', category: '에세이', color: '#4a3728', cover: '/images/cover_coffee.png' },
+  { id: '4', title: '아이와 함께하는 동화', author: 'AI 작가', category: '동화', color: '#5c4a7d', cover: '/images/cover_fairy.png' },
+  { id: '5', title: 'React 마스터하기', author: 'AI 작가', category: '기술서적', color: '#1e3a5f', cover: '/images/cover_react.png' },
+  { id: '1', title: '별이 빛나는 밤에', author: 'AI 작가', category: '소설', color: '#704214', cover: '/gallery_starry_night_emotional.png' },
 ]
 
 const testimonials: Testimonial[] = [
@@ -106,18 +109,21 @@ const testimonials: Testimonial[] = [
     quote: '오랫동안 머릿속에만 있던 이야기를 드디어 책으로 만들 수 있었어요. AI가 제 아이디어를 정말 잘 이해하고 발전시켜주었습니다.',
     author: '김지영',
     role: '첫 소설 출간 작가',
+    avatar: '/images/ko_avatar2.png'
   },
   {
     id: '2',
     quote: '전문 작가가 아니어도 책을 쓸 수 있다는 게 놀라웠어요. 마치 베테랑 편집자와 함께 작업하는 느낌이었습니다.',
     author: '이현우',
     role: '자기계발서 저자',
+    avatar: '/images/ko_avatar1.png'
   },
   {
     id: '3',
     quote: '아이에게 들려줄 동화를 직접 만들 수 있어서 정말 특별한 경험이었어요. 세상에 하나뿐인 책이 되었죠.',
     author: '박서연',
-    role: '두 아이의 엄마',
+    role: '에디터 겸 작가',
+    avatar: '/images/ko_avatar3.png'
   },
 ]
 
@@ -206,9 +212,8 @@ function Navigation() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-cream/90 dark:bg-charcoal/90 backdrop-blur-md shadow-sm' : ''
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-cream/90 dark:bg-charcoal/90 backdrop-blur-md shadow-sm' : ''
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/" className="font-serif text-2xl font-bold text-gradient">
@@ -228,130 +233,314 @@ function Navigation() {
   )
 }
 
-function OpeningBook() {
-  const [isOpen, setIsOpen] = useState(false)
+function BackgroundBook() {
+  // Config for a "thin poetry book" feel
+  const BOOK_WIDTH = 1000; // Much larger to cover background
+  const BOOK_HEIGHT = 700;
+  const PAGE_WIDTH = BOOK_WIDTH / 2;
+  const SPINE_WIDTH = 20; // Thinner spine
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsOpen(true), 500)
-    return () => clearTimeout(timer)
-  }, [])
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+      <div className="absolute top-[40%] left-1/2 -translate-x-1/2 w-full h-full opacity-10 blur-[1px]">
+        <motion.div
+          className="relative w-full h-full flex justify-center items-center"
+          style={{ transformStyle: 'preserve-3d' }}
+          initial={{
+            rotateX: 40,
+            rotateY: 0,
+            rotateZ: -10
+          }}
+          animate={{
+            rotateX: [40, 42, 38, 40],
+            rotateZ: [-10, -8, -12, -10],
+            y: [0, -20, 0],
+          }}
+          transition={{
+            rotateX: { duration: 12, repeat: Infinity, ease: "easeInOut" },
+            rotateZ: { duration: 15, repeat: Infinity, ease: "easeInOut" },
+            y: { duration: 10, repeat: Infinity, ease: "easeInOut" }
+          }}
+        >
+          {/* ==============================================
+              LEFT SIDE (Base)
+             ============================================== */}
+          <div
+            className="relative"
+            style={{ width: PAGE_WIDTH, height: BOOK_HEIGHT, transformStyle: 'preserve-3d', marginRight: SPINE_WIDTH / 2 }}
+          >
+            {/* Left Page Surface (Simple, thin) */}
+            <div
+              className="absolute inset-0 rounded-l-sm border-l border-b border-t border-gray-400/30 bg-[#fffdf9]"
+              style={{ transform: 'translateZ(0px)', transformOrigin: 'right center' }}
+            >
+              {/* Subtle lines resembling text/poetry */}
+              <div className="absolute inset-0 p-16 flex flex-col justify-center opacity-40">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-1 bg-gray-400/30 mb-8 rounded-full"
+                    style={{
+                      width: `${Math.random() * 40 + 40}%`,
+                      marginLeft: `${Math.random() * 20}%`
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
 
+
+          {/* ==============================================
+              SPINE (Center)
+             ============================================== */}
+          <div
+            className="absolute"
+            style={{
+              width: SPINE_WIDTH,
+              height: BOOK_HEIGHT,
+              transformStyle: 'preserve-3d',
+            }}
+          >
+            <div className="absolute inset-0 bg-gray-300/20" />
+            <div className="absolute inset-x-0 top-0 h-full w-[1px] mx-auto bg-gray-400/30" />
+          </div>
+
+
+          {/* ==============================================
+              RIGHT SIDE (Base + Fluttering Pages)
+             ============================================== */}
+          <div
+            className="relative"
+            style={{ width: PAGE_WIDTH, height: BOOK_HEIGHT, transformStyle: 'preserve-3d', marginLeft: SPINE_WIDTH / 2 }}
+          >
+            {/* Right Page Base */}
+            <div
+              className="absolute inset-0 rounded-r-sm border-r border-b border-t border-gray-400/30 bg-[#fffdf9]"
+              style={{ transform: 'translateZ(0px)' }}
+            />
+
+            {/* ==============================================
+                 FLUTTERING PAGES
+                ============================================== */}
+            {[0, 1, 2, 3, 4].map((index) => (
+              <motion.div
+                key={index}
+                className="absolute inset-0 rounded-r-sm border-r border-y border-gray-400/20 bg-white/40 origin-left"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transformOrigin: '0% 50%',
+                }}
+                animate={{
+                  rotateY: [-5 + (index * -2), -25 + (index * -5), -5 + (index * -2)]
+                }}
+                transition={{
+                  duration: 4 + index,
+                  ease: "easeInOut",
+                  repeat: Infinity,
+                  repeatType: "mirror",
+                  delay: index * 0.5
+                }}
+              >
+                {/* Content on fluttering pages */}
+                <div className="absolute inset-0 p-16 flex flex-col justify-center opacity-20">
+                  <div className="h-1 bg-gray-400/30 w-full mb-8" />
+                  <div className="h-1 bg-gray-400/30 w-2/3 mb-8" />
+                  <div className="h-1 bg-gray-400/30 w-4/5" />
+                </div>
+              </motion.div>
+            ))}
+
+            {/* One page flipping over completely */}
+            <motion.div
+              className="absolute inset-0 rounded-r-sm border-r border-y border-gray-400/20 bg-white/50 origin-left"
+              style={{
+                transformStyle: 'preserve-3d',
+                transformOrigin: '0% 50%',
+              }}
+              initial={{ rotateY: 0 }}
+              animate={{ rotateY: -180 }}
+              transition={{
+                duration: 15,
+                ease: "easeInOut",
+                repeat: Infinity,
+                repeatDelay: 2
+              }}
+            >
+              {/* Front content */}
+              <div className="absolute inset-0 backface-hidden bg-white/10" />
+              {/* Back content */}
+              <div
+                className="absolute inset-0 backface-hidden bg-[#fffdf9] rounded-l-sm"
+                style={{ transform: 'rotateY(180deg)' }}
+              />
+            </motion.div>
+
+          </div>
+
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+function FloatingBook() {
   return (
     <div className="perspective-[2000px] w-64 h-80 md:w-80 md:h-[26rem]">
       <motion.div
         className="relative w-full h-full"
         style={{ transformStyle: 'preserve-3d' }}
-        initial={{ rotateY: 0 }}
-        animate={{ rotateY: isOpen ? -15 : 0 }}
-        transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        animate={{
+          y: [0, -15, 0],
+          rotateZ: [-2, 2, -2],
+          rotateX: [5, 0, 5],
+        }}
+        transition={{
+          y: {
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          },
+          rotateZ: {
+            duration: 7,
+            repeat: Infinity,
+            ease: "easeInOut",
+          },
+          rotateX: {
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          },
+        }}
       >
-        {/* Book base/back cover */}
+        {/* Back Cover */}
+        <div
+          className="absolute inset-0 rounded-r-md rounded-l-sm bg-[#5a4030]"
+          style={{
+            transform: 'translateZ(-15px)',
+            boxShadow: '20px 20px 50px rgba(0,0,0,0.5)',
+          }}
+        />
+
+        {/* Pages Block (Thickness) */}
+        <div
+          className="absolute top-2 bottom-2 right-2 w-4"
+          style={{
+            right: '2px',
+            background: 'linear-gradient(to right, #ccc, #fff, #ccc)',
+            transform: 'rotateY(90deg) translateZ(-2px)',
+            transformOrigin: 'right center',
+          }}
+        />
+
+        {/* Static Pages (Left Side when open, but here roughly just the block) */}
+        <div
+          className="absolute inset-0 rounded-r-md rounded-l-sm bg-[#fffdf9]"
+          style={{
+            transform: 'translateZ(-14px)',
+            width: '98%',
+            height: '98%',
+            top: '1%',
+            left: '0.5%'
+          }}
+        />
+
+
+        {/* Front Cover (Stationary Base for flipping pages to rest on) */}
         <div
           className="absolute inset-0 rounded-r-md rounded-l-sm"
           style={{
             background: 'linear-gradient(135deg, #3d2b1f 0%, #5a4030 100%)',
-            boxShadow: '4px 4px 20px rgba(0,0,0,0.3)',
-            transform: 'translateZ(-8px)',
+            transform: 'translateZ(-15px)',
           }}
         />
 
-        {/* Book pages (side view) */}
-        <div
-          className="absolute top-2 bottom-2 right-1"
-          style={{
-            width: '8px',
-            background: 'linear-gradient(to right, #f5e6d3, #fffdf9, #f5e6d3)',
-            borderRadius: '0 2px 2px 0',
-            transform: 'translateZ(-4px)',
-          }}
-        />
 
-        {/* Front cover */}
+        {/* Animated Pages */}
+        {[0, 1, 2, 3].map((index) => (
+          <motion.div
+            key={index}
+            className="absolute inset-0 rounded-r-md rounded-l-md origin-left bg-cream-light border-l border-gray-200"
+            style={{
+              transformStyle: 'preserve-3d',
+            }}
+            initial={{ rotateY: 0 }}
+            animate={{ rotateY: -160 }}
+            transition={{
+              duration: 8,
+              ease: "easeInOut",
+              delay: index * 2, // Stagger pages
+              repeat: Infinity,
+              repeatDelay: 0,
+            }}
+          >
+            {/* Front of the page */}
+            <div
+              className="absolute inset-0 backface-hidden p-6 md:p-8 flex flex-col overflow-hidden"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
+              <div className="text-warm-gray text-xs mb-4 text-right">{index + 1}</div>
+              <div className="space-y-4 opacity-50">
+                <div className="h-1 bg-black/10 rounded w-full" />
+                <div className="h-1 bg-black/10 rounded w-5/6" />
+                <div className="h-1 bg-black/10 rounded w-4/6" />
+                <div className="h-1 bg-black/10 rounded w-full" />
+                <div className="h-1 bg-black/10 rounded w-3/4" />
+              </div>
+
+              {/* Random decorative elements on pages */}
+              {index % 2 === 0 && (
+                <div className="mt-8 mx-auto w-24 h-24 border border-black/5 rounded-full flex items-center justify-center">
+                  <div className="w-20 h-20 bg-black/5 rounded-full" />
+                </div>
+              )}
+            </div>
+
+            {/* Back of the page */}
+            <div
+              className="absolute inset-0 backface-hidden rounded-l-md bg-[#f4ebd0]"
+              style={{
+                transform: 'rotateY(180deg)',
+                backfaceVisibility: 'hidden',
+              }}
+            >
+              <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/5 to-transparent" />
+            </div>
+          </motion.div>
+        ))}
+
+        {/* Front Cover (Animated to open first) */}
         <motion.div
-          className="absolute inset-0 rounded-r-md rounded-l-sm overflow-hidden"
+          className="absolute inset-0 rounded-r-md rounded-l-sm origin-left"
           style={{
             background: 'linear-gradient(145deg, #4a3728 0%, #3d2b1f 50%, #2a1f15 100%)',
-            transformOrigin: 'left center',
             transformStyle: 'preserve-3d',
-            boxShadow: isOpen
-              ? '10px 5px 30px rgba(0,0,0,0.4)'
-              : '2px 2px 10px rgba(0,0,0,0.3)',
           }}
-          animate={{ rotateY: isOpen ? -140 : 0 }}
-          transition={{ duration: 1.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          animate={{ rotateY: -160 }}
+          transition={{
+            duration: 10,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
         >
-          {/* Cover decoration */}
-          <div className="absolute inset-3 border border-gold/40 rounded-sm" />
-          <div className="absolute inset-5 border border-gold/20 rounded-sm" />
-
-          {/* Title area */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-12 h-0.5 bg-gold/60 mb-4" />
-            <h3 className="font-serif text-gold text-lg md:text-xl font-semibold mb-2">
-              AI Book
-            </h3>
-            <p className="text-gold/60 text-xs md:text-sm">
-              당신의 이야기
-            </p>
-            <div className="w-12 h-0.5 bg-gold/60 mt-4" />
+          {/* Cover Decoration */}
+          <div className="absolute inset-4 border border-gold/40 rounded-sm opacity-70" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-z-1">
+            <h3 className="font-serif text-gold text-2xl font-semibold tracking-wider">AI Book</h3>
+            <div className="w-8 h-8 mt-4 rounded-full border border-gold/30 flex items-center justify-center">
+              <div className="w-1 h-1 bg-gold rounded-full" />
+            </div>
           </div>
 
-          {/* Spine highlight */}
+          {/* Inner side of Front Cover */}
           <div
-            className="absolute left-0 top-0 bottom-0 w-4"
-            style={{
-              background: 'linear-gradient(to right, rgba(0,0,0,0.4), transparent)',
-            }}
+            className="absolute inset-0 bg-[#3d2b1f] rounded-l-md backface-hidden"
+            style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
           />
+
         </motion.div>
 
-        {/* First page (visible when open) */}
-        <motion.div
-          className="absolute inset-0 rounded-r-md bg-cream-light"
-          style={{
-            transformOrigin: 'left center',
-            transformStyle: 'preserve-3d',
-            transform: 'translateZ(1px)',
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isOpen ? 1 : 0, rotateY: isOpen ? -130 : 0 }}
-          transition={{ duration: 1.6, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <div className="p-6 md:p-8 h-full flex flex-col">
-            <div className="text-warm-gray text-xs mb-4">Chapter 1</div>
-            <div className="space-y-2">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-2 bg-warm-gray/20 rounded"
-                  style={{ width: `${70 + Math.random() * 30}%` }}
-                />
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Inner pages visible */}
-        <div
-          className="absolute inset-0 rounded-r-md"
-          style={{
-            background: 'linear-gradient(to right, #e8dcd0, #faf6f0)',
-            transform: 'translateZ(2px)',
-          }}
-        >
-          <div className="p-6 md:p-8 h-full flex flex-col justify-between">
-            <div>
-              <p className="font-serif text-deep-brown text-sm md:text-base leading-relaxed">
-                &ldquo;모든 위대한 이야기는<br />
-                작은 아이디어에서<br />
-                시작됩니다...&rdquo;
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-gold text-xs">— AI Book</span>
-            </div>
-          </div>
-        </div>
       </motion.div>
     </div>
   )
@@ -363,198 +552,174 @@ function HeroSection() {
     target: ref,
     offset: ['start start', 'end start'],
   })
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%'])
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
 
   return (
-    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Background decoration */}
-      <motion.div
-        style={{ y, opacity }}
-        className="absolute inset-0 pointer-events-none"
-      >
-        <div className="absolute top-20 right-10 w-64 h-64 bg-gold/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-brown/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold/3 rounded-full blur-3xl" />
+    <section ref={ref} className="relative min-h-[100vh] flex items-center justify-center overflow-hidden pt-20">
+      {/* Dynamic Background */}
+      <motion.div style={{ y, opacity }} className="absolute inset-0 pointer-events-none select-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[60vw] h-[60vw] bg-gold/5 rounded-full blur-[120px] mix-blend-multiply dark:bg-gold/10 dark:mix-blend-soft-light" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[70vw] h-[70vw] bg-brown/5 rounded-full blur-[150px] mix-blend-multiply dark:bg-brown/10 dark:mix-blend-soft-light" />
       </motion.div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20">
-          {/* Text content */}
-          <div className="flex-1 text-center lg:text-left">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+
+          {/* Main Typography */}
+          <div className="lg:col-span-7 text-left z-20">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.15, delayChildren: 0.2 }
+                }
+              }}
             >
-              <span className="inline-block mb-6 px-4 py-2 bg-gold/10 text-gold rounded-full text-sm font-medium">
-                AI 협업 글쓰기 플랫폼
-              </span>
-            </motion.div>
+              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } } }}>
+                <span className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 bg-ink/5 dark:bg-cream/10 backdrop-blur-md rounded-full text-xs font-bold tracking-widest uppercase border border-ink/10 dark:border-cream/10 text-gold-dim">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                  AI Collaborative Writing
+                </span>
+              </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight"
-            >
-              <span className="text-gradient">당신의 이야기를</span>
-              <br />
-              <span className="relative inline-block mt-2">
-                책으로
-                <BrushStroke className="absolute -bottom-2 left-0 w-full h-auto text-gold" />
-              </span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-lg md:text-xl text-brown dark:text-warm-gray max-w-xl mb-10 leading-relaxed"
-            >
-              머릿속에 잠들어 있던 이야기를 깨워보세요.
-              <br className="hidden md:block" />
-              5명의 AI 에이전트가 당신의 책 완성을 도와드립니다.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center"
-            >
-              <Link href="/write" className="cta-button text-lg px-8 py-4">
-                책 쓰기 시작하기
-                <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center text-brown dark:text-warm-gray hover:text-deep-brown dark:hover:text-cream-light transition-colors"
+              <motion.h1
+                className="font-serif text-5xl md:text-7xl lg:text-7xl font-bold mb-8 leading-[1.2] tracking-tight text-balance"
+                variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } } }}
               >
-                작동 방식 알아보기
-                <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </a>
+                <span className="block text-ink dark:text-cream">누구나 책을 쓰는 시대,</span>
+                <span className="block text-gold-dim italic drop-shadow-sm">with AI Book</span>
+              </motion.h1>
+
+              <motion.p
+                className="text-lg md:text-xl text-stone dark:text-warm-gray max-w-xl mb-12 leading-relaxed font-sans font-light"
+                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] } } }}
+              >
+                당신의 생각과 지식이 책으로 만들어집니다.<br className="hidden md:block" />
+                5개의 전문 AI 에이전트가 당신만의 책을 쓸 수 있게 도와줍니다.
+              </motion.p>
+
+              <motion.div
+                className="flex flex-col sm:flex-row gap-8 items-center justify-start"
+                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.6 } } }}
+              >
+                <Link href="/write" className="group relative px-10 py-5 bg-gold text-ink font-bold tracking-widest uppercase overflow-hidden transition-all duration-300 rounded-sm shadow-[0_10px_30px_-10px_rgba(212,175,55,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.6)] hover:-translate-y-1 active:translate-y-0 active:shadow-inner">
+                  <span className="relative z-10">지금 바로 나만의 책 쓰기</span>
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                </Link>
+
+                <a href="#how-it-works" className="group flex items-center gap-3 text-ink dark:text-cream font-medium transition-colors hover:text-gold py-2">
+                  <span>프로세스 알아보기</span>
+                  <div className="w-10 h-10 rounded-full border border-ink/20 dark:border-cream/20 flex items-center justify-center group-hover:border-gold group-hover:bg-gold/10 transition-all">
+                    <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </a>
+              </motion.div>
             </motion.div>
           </div>
 
-          {/* Book animation */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="flex-shrink-0"
-          >
-            <OpeningBook />
-          </motion.div>
+          {/* 3D Visual Element - Master R3F Book */}
+          <div className="lg:col-span-5 relative h-[900px] flex items-center justify-center z-10">
+            <FloatingBookThree />
+          </div>
         </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 scroll-indicator"
-        >
-          <svg className="w-6 h-6 text-warm-gray" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </motion.div>
       </div>
     </section>
   )
 }
 
-function HowItWorksSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
+
+function MarqueeSection() {
+  const categoriesText = [
+    "Novel", "Poetry", "Essay", "Self-Help", "Technology", "Fairy Tale", "Biography", "History", "Science Art"
+  ]
 
   return (
-    <section id="how-it-works" className="py-32 bg-beige/50 dark:bg-charcoal/30">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="relative py-12 border-y border-stone/10 bg-cream dark:bg-ink overflow-hidden z-10 font-serif italic text-gold-dim">
+      <div className="flex whitespace-nowrap overflow-hidden">
         <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          className="flex gap-20 items-center text-3xl md:text-5xl font-light tracking-[0.2em] uppercase"
+          animate={{ x: [0, -2000] }}
+          transition={{ repeat: Infinity, ease: "linear", duration: 40 }}
         >
-          <span className="inline-block mb-4 text-gold font-medium tracking-wide">HOW IT WORKS</span>
-          <h2 className="font-serif text-4xl md:text-5xl font-bold mb-6">
-            5명의 전문가가 협업합니다
-          </h2>
-          <p className="text-brown dark:text-warm-gray max-w-2xl mx-auto">
-            각자의 역할에 최적화된 AI 에이전트들이 순차적으로 작업하며,
-            피드백 루프를 통해 완성도를 높여갑니다.
-          </p>
+          {Array(4).fill(null).map((_, i) => (
+            <div key={i} className="flex gap-20">
+              {categoriesText.map((cat, idx) => (
+                <span key={idx} className="flex items-center gap-8">
+                  {cat}
+                  <span className="w-2 h-2 rounded-full bg-gold/30" />
+                </span>
+              ))}
+            </div>
+          ))}
         </motion.div>
+      </div>
+    </div>
+  )
+}
 
-        {/* Agent Pipeline */}
-        <div className="relative">
-          {/* Connection line */}
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold/30 to-transparent hidden lg:block" />
+function ProcessSection() {
+  const containerRef = useRef(null)
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-4">
-            {agents.map((agent, index) => (
-              <motion.div
-                key={agent.id}
-                initial={{ opacity: 0, y: 50 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.15 }}
-                className="agent-card text-center relative"
-              >
-                {/* Step number */}
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-gold text-cream-light rounded-full flex items-center justify-center text-sm font-bold">
-                  {index + 1}
-                </div>
-
-                <div className="w-16 h-16 mx-auto mb-4 bg-gold/10 rounded-full flex items-center justify-center text-gold">
-                  {agent.icon}
-                </div>
-                <h3 className="font-serif text-xl font-semibold mb-1">{agent.name}</h3>
-                <p className="text-sm text-gold mb-3">{agent.nameKo}</p>
-                <p className="text-sm text-brown dark:text-warm-gray">{agent.description}</p>
-
-                {/* Arrow for larger screens */}
-                {index < agents.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-gold/50 z-10">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
+  return (
+    <section id="how-it-works" ref={containerRef} className="relative py-32 bg-cream-dark dark:bg-cream-dark overflow-hidden">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-24">
+          <span className="text-gold text-xs tracking-[0.2em] uppercase font-bold mb-4 block">Process</span>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-ink dark:text-cream mb-6">
+            Collaboration <span className="italic text-gold">Orchestra</span>
+          </h2>
+          <p className="text-stone max-w-lg mx-auto text-base font-light leading-relaxed">
+            체계적인 5단계 파이프라인. <br />
+            각 분야의 최고 AI 전문가들이 당신의 원고를 위해 협주합니다.
+          </p>
         </div>
 
-        {/* Feedback loop indicator */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="mt-12 text-center"
-        >
-          <div className="inline-flex items-center gap-3 px-6 py-3 bg-cream-light dark:bg-charcoal/50 rounded-full border border-gold/20">
-            <svg className="w-5 h-5 text-gold animate-spin" style={{ animationDuration: '3s' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span className="text-sm text-brown dark:text-warm-gray">
-              피드백 루프를 통한 지속적인 품질 개선
-            </span>
-          </div>
-        </motion.div>
+        {/* Improved Grid for uniform sizing */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+          {agents.map((agent, index) => {
+            return (
+              <motion.div
+                key={agent.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group relative flex"
+              >
+                <div className="relative z-10 bg-cream dark:bg-ink border border-stone/10 p-8 pt-12 rounded-xl transition-all duration-300 hover:border-gold/50 hover:shadow-xl w-full flex flex-col items-center text-center">
+
+                  {/* Number */}
+                  <div className="absolute top-4 left-6 text-xs font-bold text-gold/50 tracking-widest uppercase">
+                    Step 0{index + 1}
+                  </div>
+
+                  <div className="w-16 h-16 bg-gold/5 rounded-2xl flex items-center justify-center text-gold mb-6 group-hover:scale-110 group-hover:bg-gold/10 transition-all duration-300">
+                    {agent.icon}
+                  </div>
+
+                  <h3 className="font-serif text-xl font-bold mb-2 text-ink dark:text-cream">{agent.name}</h3>
+                  <p className="text-xs font-bold text-gold uppercase tracking-wider mb-4">{agent.nameKo}</p>
+
+                  <p className="text-sm text-stone dark:text-stone/60 leading-relaxed font-light">
+                    {agent.description}
+                  </p>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
 }
 
 function GallerySection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
   const [selectedCategory, setSelectedCategory] = useState('전체')
 
   const filteredBooks = selectedCategory === '전체'
@@ -562,84 +727,81 @@ function GallerySection() {
     : bookSamples.filter(book => book.category === selectedCategory)
 
   return (
-    <section className="py-32">
+    <section className="py-32 bg-cream dark:bg-ink">
       <div className="max-w-7xl mx-auto px-6">
-        <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <span className="inline-block mb-4 text-gold font-medium tracking-wide">GALLERY</span>
-          <h2 className="font-serif text-4xl md:text-5xl font-bold mb-6">
-            AI가 완성한 책들
-          </h2>
-          <p className="text-brown dark:text-warm-gray max-w-2xl mx-auto mb-10">
-            다양한 장르의 책들이 AI Book을 통해 탄생했습니다.
-            당신의 이야기도 이 갤러리에 추가될 수 있습니다.
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+          <div className="max-w-2xl">
+            <span className="text-gold text-xs tracking-[0.2em] uppercase font-bold mb-4 block">Archives</span>
+            <h2 className="text-5xl md:text-6xl font-serif font-bold text-ink dark:text-cream leading-tight">
+              Masterpieces <br /><span className="italic text-gold">Created by AI</span>
+            </h2>
+          </div>
 
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2">
+          {/* Minimalist Filter */}
+          <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm transition-all ${
-                  selectedCategory === category
-                    ? 'bg-deep-brown dark:bg-gold text-cream-light'
-                    : 'bg-beige/50 dark:bg-charcoal/30 text-brown dark:text-warm-gray hover:bg-beige dark:hover:bg-charcoal/50'
-                }`}
+                className={`px-4 py-2 rounded-full text-xs font-medium tracking-wider transition-all duration-300 border ${selectedCategory === category
+                  ? 'bg-ink dark:bg-cream text-cream dark:text-ink border-ink dark:border-cream'
+                  : 'bg-transparent text-stone dark:text-stone/60 border-stone/20 hover:border-gold hover:text-gold'
+                  }`}
               >
                 {category}
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Books Grid */}
+        {/* Bento Grid */}
         <motion.div
           layout
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           <AnimatePresence mode="popLayout">
-            {filteredBooks.map((book, index) => (
-              <motion.div
-                key={book.id}
-                layout
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                className="group cursor-pointer"
-              >
-                <div
-                  className="relative w-full aspect-[2/3] rounded-md overflow-hidden shadow-lg transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl"
-                  style={{
-                    background: `linear-gradient(135deg, ${book.color}, ${book.color}dd)`,
-                    transformStyle: 'preserve-3d',
-                  }}
+            {filteredBooks.map((book, index) => {
+              const isLarge = index === 0 || index === 3;
+
+              return (
+                <motion.div
+                  key={book.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className={`group relative overflow-hidden rounded-sm cursor-pointer ${isLarge ? 'col-span-2 row-span-2 aspect-[4/5]' : 'col-span-1 row-span-1 aspect-[3/4]'}`}
                 >
-                  {/* Book spine effect */}
-                  <div className="absolute left-0 top-0 bottom-0 w-3 bg-black/20" />
+                  {/* Image Cover */}
+                  <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105 bg-stone/10">
+                    {book.cover ? (
+                      <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full" style={{ background: book.color }} />
+                    )}
+                  </div>
 
-                  {/* Gold border decoration */}
-                  <div className="absolute inset-2 border border-gold/30 rounded-sm" />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-80" />
 
-                  {/* Book content */}
-                  <div className="absolute inset-0 p-4 flex flex-col justify-between text-cream-light">
-                    <div>
-                      <span className="text-xs opacity-70">{book.category}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-serif text-sm font-semibold leading-tight mb-1">{book.title}</h4>
-                      <p className="text-xs opacity-70">{book.author}</p>
+                  {/* Content Overlay */}
+                  <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      <span className="inline-block px-2 py-1 bg-white/10 backdrop-blur-md rounded-sm text-[10px] text-white/90 mb-2 border border-white/10 tracking-wider uppercase">
+                        {book.category}
+                      </span>
+                      <h3 className={`font-serif font-bold text-white mb-1 leading-tight ${isLarge ? 'text-3xl lg:text-4xl' : 'text-lg lg:text-xl'}`}>
+                        {book.title}
+                      </h3>
+                      <p className="text-white/70 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 font-serif italic">
+                        by {book.author}
+                      </p>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              )
+            })}
           </AnimatePresence>
         </motion.div>
       </div>
@@ -648,44 +810,42 @@ function GallerySection() {
 }
 
 function TestimonialsSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-
   return (
-    <section className="py-32 bg-beige/50 dark:bg-charcoal/30">
+    <section className="py-32 bg-cream-dark dark:bg-charcoal/20">
       <div className="max-w-6xl mx-auto px-6">
-        <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <span className="inline-block mb-4 text-gold font-medium tracking-wide">TESTIMONIALS</span>
-          <h2 className="font-serif text-4xl md:text-5xl font-bold mb-6">
-            작가들의 이야기
+        <div className="text-center mb-20">
+          <span className="text-gold text-xs tracking-[0.2em] uppercase font-bold mb-4 block">Testimonials</span>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-ink dark:text-cream">
+            Authors' Voices
           </h2>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={testimonial.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.15 }}
-              className="testimonial-card"
+              className="bg-cream dark:bg-ink p-8 rounded-xl border border-stone/10 shadow-sm relative group hover:border-gold/30 transition-all flex flex-col"
             >
-              <p className="text-lg leading-relaxed mb-6 relative z-10">
+              <div className="absolute -top-4 -left-2 text-6xl text-gold/20 font-serif leading-none">“</div>
+              <p className="text-stone dark:text-stone/60 leading-relaxed mb-8 relative z-10 pt-4 font-light italic flex-grow">
                 {testimonial.quote}
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gold/20 rounded-full flex items-center justify-center text-gold font-serif font-bold">
-                  {testimonial.author[0]}
+
+              <div className="border-t border-stone/10 pt-6 flex items-center gap-5">
+                <div className="shrink-0 w-14 h-14 rounded-full overflow-hidden border-2 border-gold/20 group-hover:border-gold transition-all">
+                  {testimonial.avatar ? (
+                    <img src={testimonial.avatar} alt={testimonial.author} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gold/10" />
+                  )}
                 </div>
-                <div>
-                  <p className="font-semibold">{testimonial.author}</p>
-                  <p className="text-sm text-brown dark:text-warm-gray">{testimonial.role}</p>
+                <div className="flex flex-col">
+                  <p className="font-serif font-bold text-ink dark:text-cream text-lg leading-snug">{testimonial.author}</p>
+                  <p className="text-[10px] text-gold uppercase tracking-widest font-bold mt-1">{testimonial.role}</p>
                 </div>
               </div>
             </motion.div>
@@ -697,34 +857,47 @@ function TestimonialsSection() {
 }
 
 function CTASection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-
   return (
-    <section className="py-32">
-      <div className="max-w-4xl mx-auto px-6 text-center">
+    <section className="relative py-48 bg-ink text-cream overflow-hidden flex items-center justify-center">
+      {/* Abstract Background Animation */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gold/10 via-transparent to-transparent opacity-30 blur-3xl" />
         <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] opacity-5"
+        />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h2 className="font-serif text-4xl md:text-6xl font-bold mb-8">
-            당신의 이야기는
-            <br />
-            <span className="text-gradient">무엇인가요?</span>
+          <h2 className="text-5xl md:text-7xl lg:text-9xl font-serif font-bold mb-16 tracking-tighter leading-none">
+            당신의 이야기를 <br /><span className="text-gold italic font-light">완성하세요.</span>
           </h2>
-          <p className="text-lg text-brown dark:text-warm-gray max-w-2xl mx-auto mb-12">
-            누구나 마음속에 하나의 책을 품고 있습니다.
-            <br />
-            지금 바로 그 이야기를 세상에 꺼내보세요.
-          </p>
-          <Link href="/write" className="cta-button text-lg px-10 py-5">
-            무료로 시작하기
-            <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </Link>
+
+          <div className="flex flex-col items-center">
+            <Link href="/write" className="group relative inline-flex items-center gap-6 px-16 py-8 bg-gold text-ink text-2xl font-bold tracking-[0.2em] uppercase overflow-hidden transition-all duration-500 hover:bg-cream">
+              <span className="relative z-10">Start Your Journey</span>
+              <div className="relative z-10 w-12 h-12 rounded-full border border-ink/20 flex items-center justify-center group-hover:translate-x-4 transition-transform duration-500">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+              <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+            </Link>
+            <p className="mt-12 text-stone-500 text-xs tracking-[0.4em] uppercase font-bold animate-pulse">
+              Unleash Your Creativity • Limited Invitations
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>
@@ -733,24 +906,54 @@ function CTASection() {
 
 function Footer() {
   return (
-    <footer className="py-12 border-t border-beige dark:border-charcoal/50">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="font-serif text-xl font-bold text-gradient">AI Book</div>
-          <p className="text-sm text-warm-gray">
-            AI 에이전트들이 협업하여 당신만의 책을 완성합니다.
-          </p>
-          <div className="flex gap-6">
-            <Link href="/write" className="text-sm text-brown dark:text-warm-gray hover:text-deep-brown dark:hover:text-cream-light transition-colors">
-              책 쓰기
-            </Link>
-            <Link href="/projects" className="text-sm text-brown dark:text-warm-gray hover:text-deep-brown dark:hover:text-cream-light transition-colors">
-              내 프로젝트
-            </Link>
+    <footer className="py-24 bg-ink text-cream border-t border-white/5 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}
+      />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24 mb-20">
+          <div className="md:col-span-5">
+            <Link href="/" className="font-serif text-4xl font-bold mb-6 block tracking-tight">AI Book.</Link>
+            <p className="text-stone-400 max-w-sm font-light leading-relaxed mb-8">
+              We combine human creativity with artificial intelligence to unfold stories that have never been told before.
+            </p>
+            <div className="flex gap-4">
+              {['Twitter', 'Instagram', 'LinkedIn'].map(social => (
+                <a key={social} href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white hover:text-ink transition-all">
+                  <span className="sr-only">{social}</span>
+                  <div className="w-4 h-4 bg-current rounded-full opacity-50" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:col-span-3">
+            <h4 className="font-serif text-lg mb-6 text-gold">Platform</h4>
+            <ul className="space-y-4 text-stone-400">
+              <li><Link href="/write" className="hover:text-white transition-colors">Start Writing</Link></li>
+              <li><Link href="/features" className="hover:text-white transition-colors">Features</Link></li>
+              <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+            </ul>
+          </div>
+
+          <div className="md:col-span-4">
+            <h4 className="font-serif text-lg mb-6 text-gold">Newsletter</h4>
+            <p className="text-sm text-stone-400 mb-4 font-light">Subscribe to our weekly editorial reflections.</p>
+            <div className="flex border-b border-white/20 pb-2">
+              <input type="email" placeholder="Email address" className="bg-transparent w-full outline-none text-white placeholder-stone-700 text-sm" />
+              <button className="text-gold uppercase text-[10px] font-bold tracking-[0.2em] hover:text-white transition-colors">Join</button>
+            </div>
           </div>
         </div>
-        <div className="mt-8 pt-8 border-t border-beige dark:border-charcoal/50 text-center text-sm text-warm-gray">
-          Made with AI Book
+
+        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 text-xs text-stone-600 uppercase tracking-widest">
+          <p>© 2024 AI Book Inc. All rights reserved.</p>
+          <div className="flex gap-8 mt-4 md:mt-0">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+          </div>
         </div>
       </div>
     </footer>
@@ -764,8 +967,10 @@ export default function Home() {
   return (
     <main className="relative">
       <Navigation />
+      <BackgroundBook />
       <HeroSection />
-      <HowItWorksSection />
+      <MarqueeSection />
+      <ProcessSection />
       <GallerySection />
       <TestimonialsSection />
       <CTASection />
