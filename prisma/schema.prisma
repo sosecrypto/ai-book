@@ -39,6 +39,18 @@ model Project {
   coverImage     CoverImage?
   researchData   ResearchData?
   editHistory    EditHistory[]
+  sourceFile     SourceFile?
+}
+
+model SourceFile {
+  id         String   @id @default(uuid())
+  projectId  String   @unique
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileType   String   // 'txt' | 'docx' | 'pdf'
+  fileSize   Int
+  rawContent String   // 원본 텍스트 전체
+  createdAt  DateTime @default(now())
 }
 
 model ResearchData {
@@ -78,10 +90,26 @@ model Chapter {
   status    String   @default("pending")
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  pages     Page[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([projectId, number])
+}
+
+model Page {
+  id         String   @id @default(uuid())
+  chapterId  String
+  chapter    Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  pageNumber Int
+  content    String
+  status     String   @default("empty") // empty, draft, complete
+  wordCount  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([chapterId, pageNumber])
+  @@index([chapterId])
 }
 
 model CoverImage {

@@ -87,6 +87,7 @@ export interface OutlineFeedback {
 }
 
 export interface Chapter {
+  id?: string
   number: number
   title: string
   content: string
@@ -100,6 +101,55 @@ export type ChapterStatus =
   | 'editing'
   | 'reviewing'
   | 'approved'
+
+// 페이지 관련 타입
+export type PageStatus = 'empty' | 'draft' | 'complete'
+
+export interface Page {
+  id: string
+  chapterId: string
+  pageNumber: number
+  content: string
+  status: PageStatus
+  wordCount: number
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export type PageViewMode = 'single' | 'spread' | 'continuous'
+
+export type PaperSize = 'a4' | 'a5' | 'b5' | 'letter' | 'novel'
+
+export interface PaperDimensions {
+  name: string
+  width: number  // px (기준 너비)
+  height: number // px (기준 높이)
+  ratio: number  // 가로세로 비율
+}
+
+export const PAPER_SIZES: Record<PaperSize, PaperDimensions> = {
+  a4: { name: 'A4', width: 595, height: 842, ratio: 1.414 },
+  a5: { name: 'A5', width: 420, height: 595, ratio: 1.417 },
+  b5: { name: 'B5', width: 499, height: 709, ratio: 1.42 },
+  letter: { name: 'Letter', width: 612, height: 792, ratio: 1.29 },
+  novel: { name: '신국판 (소설)', width: 430, height: 637, ratio: 1.48 },
+}
+
+export interface PageEditorState {
+  pages: Page[]
+  currentPage: number
+  totalPages: number
+  zoom: number // 50-200%
+  viewMode: PageViewMode
+  paperSize: PaperSize
+  isDirty: boolean
+  lastSaved: Date | null
+}
+
+export interface PageGenerateMode {
+  mode: 'new' | 'continue' | 'rewrite'
+  context?: string
+}
 
 export interface Revision {
   id: string
@@ -204,6 +254,38 @@ export interface EditSuggestion {
   type: 'grammar' | 'style' | 'clarity' | 'structure' | 'content'
   severity: 'minor' | 'moderate' | 'major'
   status: 'pending' | 'accepted' | 'rejected'
+}
+
+// 파일 업로드 관련 타입
+export type UploadFileType = 'txt' | 'docx' | 'pdf'
+
+export interface ParsedFile {
+  content: string
+  fileName: string
+  fileType: UploadFileType
+  fileSize: number
+}
+
+export interface SourceFile {
+  id: string
+  projectId: string
+  fileName: string
+  fileType: UploadFileType
+  fileSize: number
+  rawContent: string
+  createdAt: Date
+}
+
+export interface ChapterBoundary {
+  startLine: number
+  endLine: number
+  title: string
+}
+
+export interface SplitChapter {
+  number: number
+  title: string
+  content: string
 }
 
 // 단계별 진행 상태

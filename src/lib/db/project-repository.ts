@@ -1,10 +1,31 @@
 import { prisma } from './client'
-import type { BookProject, BookOutline, Chapter, BookType, BookStatus, ProjectStage } from '@/types/book'
+import type { BookProject, BookOutline, Chapter, BookType, BookStatus, ProjectStage, UploadFileType, Page } from '@/types/book'
+import { countWords, getPageStatus } from '@/lib/page-utils'
 
 export interface CreateProjectDto {
   title: string
   type: BookType
   description: string
+}
+
+export interface SourceFileDto {
+  fileName: string
+  fileType: UploadFileType
+  fileSize: number
+  rawContent: string
+}
+
+export interface CreateProjectWithFileDto {
+  title: string
+  type: string
+  description: string
+  sourceFile?: SourceFileDto
+  chapters?: {
+    number: number
+    title: string
+    content: string
+    status: string
+  }[]
 }
 
 export interface UpdateProjectDto {
@@ -65,6 +86,7 @@ function toBookProject(dbProject: {
     confirmedAt: dbProject.confirmedAt,
     userId: dbProject.userId,
     chapters: dbProject.chapters.map((ch) => ({
+      id: ch.id,
       number: ch.number,
       title: ch.title,
       content: ch.content,
@@ -164,6 +186,171 @@ export const projectRepository = {
           number: chapterNumber,
         },
       },
+    })
+  },
+
+  async createWithFile(data: CreateProjectWithFileDto): Promise<BookProject> {
+    const { sourceFile, chapters, ...projectData } = data
+
+    const hasChapters = chapters && chapters.length > 0
+
+    const outline: BookOutline | null = hasChapters
+      ? {
+          synopsis: '',
+          chapters: chapters.map((ch) => ({
+            number: ch.number,
+            title: ch.title,
+            summary: ch.content.substring(0, 200) + '...',
+            keyPoints: [],
+            sections: [],
+          })),
+          estimatedPages: Math.ceil(
+            chapters.reduce((sum, ch) => sum + ch.content.length, 0) / 1500
+          ),
+          targetAudience: '',
+          tone: '',
+        }
+      : null
+
+    const project = await prisma.project.create({
+      data: {
+        title: projectData.title,
+        type: projectData.type,
+        description: projectData.description,
+        status: 'draft',
+        stage: hasChapters ? 'write' : 'research',
+        outline: outline ? JSON.stringify(outline) : null,
+        ...(sourceFile && {
+          sourceFile: {
+            create: {
+              fileName: sourceFile.fileName,
+              fileType: sourceFile.fileType,
+              fileSize: sourceFile.fileSize,
+              rawContent: sourceFile.rawContent,
+            },
+          },
+        }),
+        ...(hasChapters && {
+          chapters: {
+            create: chapters.map((ch) => ({
+              number: ch.number,
+              title: ch.title,
+              content: ch.content,
+              status: ch.status || 'writing',
+            })),
+          },
+        }),
+      },
+      include: { chapters: { orderBy: { number: 'asc' } } },
+    })
+
+    return toBookProject(project)
+  },
+
+  async saveSourceFile(
+    projectId: string,
+    data: SourceFileDto
+  ): Promise<void> {
+    await prisma.sourceFile.upsert({
+      where: { projectId },
+      update: {
+        fileName: data.fileName,
+        fileType: data.fileType,
+        fileSize: data.fileSize,
+        rawContent: data.rawContent,
+      },
+      create: {
+        projectId,
+        fileName: data.fileName,
+        fileType: data.fileType,
+        fileSize: data.fileSize,
+        rawContent: data.rawContent,
+      },
+    })
+  },
+
+  async getPages(chapterId: string): Promise<Page[]> {
+    const pages = await prisma.page.findMany({
+      where: { chapterId },
+      orderBy: { pageNumber: 'asc' },
+    })
+    return pages.map((p) => ({
+      id: p.id,
+      chapterId: p.chapterId,
+      pageNumber: p.pageNumber,
+      content: p.content,
+      status: p.status as Page['status'],
+      wordCount: p.wordCount,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }))
+  },
+
+  async savePage(
+    chapterId: string,
+    data: { pageNumber: number; content: string }
+  ): Promise<Page> {
+    const wordCount = countWords(data.content)
+    const status = getPageStatus(data.content)
+
+    const page = await prisma.page.upsert({
+      where: {
+        chapterId_pageNumber: {
+          chapterId,
+          pageNumber: data.pageNumber,
+        },
+      },
+      update: {
+        content: data.content,
+        status,
+        wordCount,
+      },
+      create: {
+        chapterId,
+        pageNumber: data.pageNumber,
+        content: data.content,
+        status,
+        wordCount,
+      },
+    })
+
+    return {
+      id: page.id,
+      chapterId: page.chapterId,
+      pageNumber: page.pageNumber,
+      content: page.content,
+      status: page.status as Page['status'],
+      wordCount: page.wordCount,
+      createdAt: page.createdAt,
+      updatedAt: page.updatedAt,
+    }
+  },
+
+  async deletePage(chapterId: string, pageNumber: number): Promise<void> {
+    await prisma.page.delete({
+      where: {
+        chapterId_pageNumber: {
+          chapterId,
+          pageNumber,
+        },
+      },
+    })
+  },
+
+  async syncPagesToChapter(chapterId: string): Promise<void> {
+    const pages = await prisma.page.findMany({
+      where: { chapterId },
+      orderBy: { pageNumber: 'asc' },
+    })
+
+    const mergedContent = pages
+      .map((p) => p.content)
+      .filter((c) => c.trim())
+      .join('\n\n')
+
+    await prisma.chapter.update({
+      where: { id: chapterId },
+      data: { content: mergedContent },
     })
   },
 }
