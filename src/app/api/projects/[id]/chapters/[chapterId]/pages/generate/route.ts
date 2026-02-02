@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
 
+// TODO: 인증 미들웨어 추가 필요 (Task #2)
+
 type RouteParams = { params: Promise<{ id: string; chapterId: string }> }
 
 const GeneratePageSchema = z.object({
@@ -74,21 +76,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { pageNumber, mode, context, currentContent } = parseResult.data
 
+    // N+1 방지: chapter와 project를 한 번에 조회
     const chapter = await prisma.chapter.findFirst({
       where: { id: chapterId, projectId: id },
+      include: { project: true },
     })
 
     if (!chapter) {
-      return new Response('Chapter not found', { status: 404 })
+      return new Response(
+        JSON.stringify({ error: 'Chapter not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
-    const project = await prisma.project.findUnique({
-      where: { id },
-    })
-
-    if (!project) {
-      return new Response('Project not found', { status: 404 })
-    }
+    const project = chapter.project
 
     const sanitizedContext = sanitizeForPrompt(context)
     const sanitizedCurrentContent = currentContent ? sanitizeForPrompt(currentContent) : ''
@@ -149,6 +150,9 @@ ${sanitizedCurrentContent}
       },
     })
   } catch {
-    return new Response('Failed to generate page', { status: 500 })
+    return new Response(
+      JSON.stringify({ error: 'Failed to generate page' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 }

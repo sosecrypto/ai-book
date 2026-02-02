@@ -1,7 +1,37 @@
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
-import { ChapterOutline } from '@/types/book'
+
+// TODO: 인증 미들웨어 추가 필요 (Task #2)
+
+const MAX_CONTENT_LENGTH = 10000
+
+const ChapterOutlineSchema = z.object({
+  title: z.string().max(200),
+  summary: z.string().max(MAX_CONTENT_LENGTH),
+  keyPoints: z.array(z.string().max(500)).optional(),
+})
+
+const PreviousChapterSchema = z.object({
+  number: z.number().int().positive(),
+  title: z.string().max(200),
+  summary: z.string().max(MAX_CONTENT_LENGTH),
+})
+
+const WriteChapterSchema = z.object({
+  chapterNumber: z.number().int().positive(),
+  chapterOutline: ChapterOutlineSchema,
+  previousChapters: z.array(PreviousChapterSchema).max(50),
+})
+
+function sanitizeForPrompt(text: string): string {
+  return text
+    .replace(/```/g, '')
+    .replace(/\$\{/g, '')
+    .trim()
+    .slice(0, MAX_CONTENT_LENGTH)
+}
 
 const WRITER_PROMPT = `당신은 전문 작가입니다. 주어진 챕터 개요를 바탕으로 완성도 높은 내용을 작성해주세요.
 
@@ -29,39 +59,47 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { chapterNumber, chapterOutline, previousChapters } = await request.json() as {
-      chapterNumber: number
-      chapterOutline: ChapterOutline
-      previousChapters: { number: number; title: string; summary: string }[]
+    const body = await request.json()
+
+    const parseResult = WriteChapterSchema.safeParse(body)
+    if (!parseResult.success) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request body', details: parseResult.error.flatten() }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
-    // 프로젝트 정보 조회
+    const { chapterNumber, chapterOutline, previousChapters } = parseResult.data
+
     const project = await prisma.project.findUnique({
       where: { id }
     })
 
     if (!project) {
-      return new Response('Project not found', { status: 404 })
+      return new Response(
+        JSON.stringify({ error: 'Project not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
-    // 이전 챕터 컨텍스트 구성
-    let previousContext = ''
-    if (previousChapters.length > 0) {
-      previousContext = '\n\n**이전 챕터 요약:**\n' +
-        previousChapters.map(ch => `- ${ch.number}. ${ch.title}: ${ch.summary}`).join('\n')
-    }
+    const previousContext = previousChapters.length > 0
+      ? '\n\n**이전 챕터 요약:**\n' +
+        previousChapters.map(ch =>
+          `- ${ch.number}. ${sanitizeForPrompt(ch.title)}: ${sanitizeForPrompt(ch.summary)}`
+        ).join('\n')
+      : ''
 
-    const prompt = `**책 제목**: ${project.title}
+    const prompt = `**책 제목**: ${sanitizeForPrompt(project.title)}
 **책 유형**: ${project.type}
-**타겟 독자**: ${project.targetAudience || '일반 독자'}
-**문체**: ${project.tone || '친근체'}
+**타겟 독자**: ${sanitizeForPrompt(project.targetAudience || '일반 독자')}
+**문체**: ${sanitizeForPrompt(project.tone || '친근체')}
 ${previousContext}
 
 **현재 챕터 정보:**
 - 챕터 번호: ${chapterNumber}
-- 챕터 제목: ${chapterOutline.title}
-- 챕터 요약: ${chapterOutline.summary}
-- 핵심 포인트: ${chapterOutline.keyPoints?.join(', ') || '없음'}
+- 챕터 제목: ${sanitizeForPrompt(chapterOutline.title)}
+- 챕터 요약: ${sanitizeForPrompt(chapterOutline.summary)}
+- 핵심 포인트: ${chapterOutline.keyPoints?.map(sanitizeForPrompt).join(', ') || '없음'}
 
 위 정보를 바탕으로 이 챕터의 본문을 작성해주세요.`
 
@@ -96,8 +134,10 @@ ${previousContext}
         'Connection': 'keep-alive'
       }
     })
-  } catch (error) {
-    console.error('Failed to write chapter:', error)
-    return new Response('Failed to write chapter', { status: 500 })
+  } catch {
+    return new Response(
+      JSON.stringify({ error: 'Failed to write chapter' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 }

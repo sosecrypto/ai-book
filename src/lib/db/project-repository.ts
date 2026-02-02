@@ -48,6 +48,15 @@ export interface CreateChapterDto {
   status?: string
 }
 
+function safeParseJSON<T>(json: string | null, fallback: T): T {
+  if (!json) return fallback
+  try {
+    return JSON.parse(json) as T
+  } catch {
+    return fallback
+  }
+}
+
 // Transform DB Project to BookProject
 function toBookProject(dbProject: {
   id: string
@@ -79,7 +88,7 @@ function toBookProject(dbProject: {
     description: dbProject.description,
     status: dbProject.status as BookStatus,
     stage: (dbProject.stage || 'research') as ProjectStage,
-    outline: dbProject.outline ? JSON.parse(dbProject.outline) : null,
+    outline: safeParseJSON<BookOutline | null>(dbProject.outline, null),
     targetAudience: dbProject.targetAudience,
     targetLength: dbProject.targetLength,
     tone: dbProject.tone,
@@ -339,19 +348,21 @@ export const projectRepository = {
   },
 
   async syncPagesToChapter(chapterId: string): Promise<void> {
-    const pages = await prisma.page.findMany({
-      where: { chapterId },
-      orderBy: { pageNumber: 'asc' },
-    })
+    await prisma.$transaction(async (tx) => {
+      const pages = await tx.page.findMany({
+        where: { chapterId },
+        orderBy: { pageNumber: 'asc' },
+      })
 
-    const mergedContent = pages
-      .map((p) => p.content)
-      .filter((c) => c.trim())
-      .join('\n\n')
+      const mergedContent = pages
+        .map((p) => p.content)
+        .filter((c) => c.trim())
+        .join('\n\n')
 
-    await prisma.chapter.update({
-      where: { id: chapterId },
-      data: { content: mergedContent },
+      await tx.chapter.update({
+        where: { id: chapterId },
+        data: { content: mergedContent },
+      })
     })
   },
 }
