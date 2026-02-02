@@ -40,6 +40,8 @@ model Project {
   researchData   ResearchData?
   editHistory    EditHistory[]
   sourceFile     SourceFile?
+  bookMetadata   BookMetadata?
+  isbn           ISBN?
 }
 
 model SourceFile {
@@ -121,4 +123,51 @@ model CoverImage {
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// 출판 메타데이터
+model BookMetadata {
+  id              String    @id @default(uuid())
+  projectId       String    @unique
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  subtitle        String?
+  authors         String    @default("[]") // JSON: [{name, role, bio}]
+  publisher       String?
+  publisherAddress String?
+  publishDate     DateTime?
+  edition         String?   // "초판", "개정판" 등
+  printRun        Int?      // 인쇄 부수
+
+  categories      String    @default("[]") // JSON: BISAC/KDC 코드
+  keywords        String    @default("[]") // JSON array
+  language        String    @default("ko")
+
+  copyright       String?
+  license         String?   // CC-BY 등
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ISBN 관리
+model ISBN {
+  id          String    @id @default(uuid())
+  projectId   String    @unique
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  isbn13      String    @unique
+  isbn10      String?
+  checkDigit  String
+  prefix      String    // 978 또는 979
+  groupCode   String    // 국가/언어 그룹 (한국: 89)
+  registrant  String    // 출판사 코드
+  publication String    // 도서 코드
+
+  barcodeUrl  String?   // 생성된 바코드 이미지 URL
+  isValid     Boolean   @default(false)
+  assignedAt  DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

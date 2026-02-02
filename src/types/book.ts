@@ -288,6 +288,101 @@ export interface SplitChapter {
   content: string
 }
 
+// ===== 출판 메타데이터 타입 =====
+
+export type AuthorRole = 'author' | 'co-author' | 'editor' | 'translator' | 'illustrator'
+
+export interface Author {
+  name: string
+  role: AuthorRole
+  bio?: string
+  email?: string
+  website?: string
+}
+
+export interface BookCategory {
+  system: 'BISAC' | 'KDC' | 'DDC' | 'custom'
+  code: string
+  name: string
+}
+
+export interface BookMetadata {
+  id: string
+  projectId: string
+  subtitle?: string
+  authors: Author[]
+  publisher?: string
+  publisherAddress?: string
+  publishDate?: Date
+  edition?: string
+  printRun?: number
+  categories: BookCategory[]
+  keywords: string[]
+  language: string
+  copyright?: string
+  license?: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+// ===== ISBN 타입 =====
+
+export interface ISBNData {
+  id: string
+  projectId: string
+  isbn13: string
+  isbn10?: string
+  checkDigit: string
+  prefix: string        // 978 또는 979
+  groupCode: string     // 국가/언어 그룹 (한국: 89)
+  registrant: string    // 출판사 코드
+  publication: string   // 도서 코드
+  barcodeUrl?: string
+  isValid: boolean
+  assignedAt?: Date
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface ISBNComponents {
+  prefix: string
+  groupCode: string
+  registrant: string
+  publication: string
+  checkDigit: string
+}
+
+// ===== 내보내기 관련 타입 =====
+
+export type ExportFormat = 'pdf' | 'epub' | 'mobi' | 'print-pdf'
+
+export interface ExportOptions {
+  format: ExportFormat
+  includeMetadata: boolean
+  includeCover: boolean
+  includeToc: boolean
+}
+
+export interface EPUBOptions {
+  title: string
+  author: string | string[]
+  publisher?: string
+  language?: string
+  cover?: string | Buffer
+  css?: string
+  tocTitle?: string
+  version?: 2 | 3
+}
+
+export interface PrintOptions {
+  paperSize: PaperSize
+  colorMode: 'CMYK' | 'RGB'
+  dpi: 300 | 400 | 600
+  bleed?: number  // mm
+  cropMarks?: boolean
+  iccProfile?: 'FOGRA39' | 'FOGRA51'
+}
+
 // 단계별 진행 상태
 export interface StageProgress {
   research: {
