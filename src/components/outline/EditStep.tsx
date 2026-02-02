@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BookOutline, ChapterOutline } from '@/types/book'
 
 interface EditStepProps {
@@ -14,7 +14,31 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
   const [editingChapter, setEditingChapter] = useState<number | null>(null)
   const [editingSummary, setEditingSummary] = useState<number | null>(null)
   const [newChapterTitle, setNewChapterTitle] = useState('')
-  const [expandedChapter, setExpandedChapter] = useState<number | null>(null)
+  // 처음에 모든 챕터 펼침
+  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(
+    () => new Set(outline.chapters.map((_, i) => i))
+  )
+
+  // outline 변경 시 새 챕터도 펼침
+  useEffect(() => {
+    setExpandedChapters(prev => {
+      const newSet = new Set(prev)
+      outline.chapters.forEach((_, i) => newSet.add(i))
+      return newSet
+    })
+  }, [outline.chapters.length])
+
+  const toggleChapter = (index: number) => {
+    setExpandedChapters(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
+      }
+      return newSet
+    })
+  }
 
   const handleAddChapter = () => {
     if (!newChapterTitle.trim()) return
@@ -160,10 +184,10 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setExpandedChapter(expandedChapter === index ? null : index)}
+                    onClick={() => toggleChapter(index)}
                     className="p-2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                   >
-                    <svg className={`w-5 h-5 transition-transform ${expandedChapter === index ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-5 h-5 transition-transform ${expandedChapters.has(index) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
@@ -179,7 +203,7 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
               </div>
 
               {/* 챕터 상세 (확장) */}
-              {expandedChapter === index && (
+              {expandedChapters.has(index) && (
                 <div className="px-5 pb-5 pt-0 border-t border-neutral-100 dark:border-neutral-800">
                   <div className="pt-5">
                     <label className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-2 block">
