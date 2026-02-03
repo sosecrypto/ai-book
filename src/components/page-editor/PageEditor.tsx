@@ -52,23 +52,6 @@ export default function PageEditor({
   const [streamingContent, setStreamingContent] = useState('')
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // 챕터 변경 시 페이지 상태 초기화 (initialContent prop 변경 감지)
-  useEffect(() => {
-    const newPages = splitChapterToPages(initialContent).map((p, idx) => ({
-      ...p,
-      id: `temp-${idx}`,
-      chapterId,
-    }))
-    setState(prev => ({
-      ...prev,
-      pages: newPages,
-      currentPage: 1,
-      totalPages: newPages.length,
-      isDirty: false,
-      lastSaved: null,
-    }))
-  }, [initialContent, chapterId])
-
   const mergePagesContent = useCallback(() => {
     return state.pages
       .slice()
@@ -217,30 +200,62 @@ export default function PageEditor({
     setState((prev) => ({ ...prev, paperSize }))
   }
 
-  const handleDeletePage = (pageNumber: number) => {
-    setState((prev) => {
-      // 페이지가 1개뿐이면 삭제 불가
-      if (prev.pages.length <= 1) return prev
+  const handleDeletePage = async (pageNumber: number) => {
+    // 해당 페이지 삭제 및 번호 재조정
+    let newPages = state.pages
+      .filter((p) => p.pageNumber !== pageNumber)
+      .map((p, idx) => ({
+        ...p,
+        pageNumber: idx + 1,
+      }))
 
-      // 해당 페이지 삭제 및 번호 재조정
-      const newPages = prev.pages
-        .filter((p) => p.pageNumber !== pageNumber)
-        .map((p, idx) => ({
-          ...p,
-          pageNumber: idx + 1,
-        }))
+    // 모든 페이지가 삭제되면 빈 페이지 1개 자동 생성
+    if (newPages.length === 0) {
+      newPages = [{
+        id: `temp-empty-${Date.now()}`,
+        chapterId,
+        pageNumber: 1,
+        content: '',
+        status: 'empty' as const,
+        wordCount: 0,
+      }]
+    }
 
-      // 현재 페이지 조정
-      const newCurrentPage = pageNumber > newPages.length ? newPages.length : pageNumber
+    // 현재 페이지 조정
+    const newCurrentPage = Math.min(pageNumber, newPages.length)
 
-      return {
+    // 삭제된 페이지 배열로 내용 생성
+    const content = newPages
+      .slice()
+      .sort((a, b) => a.pageNumber - b.pageNumber)
+      .map((p) => p.content)
+      .filter((c) => c.trim())
+      .join('\n\n')
+
+    // 즉시 저장
+    setIsSaving(true)
+    try {
+      await onSave(content)
+      setState((prev) => ({
+        ...prev,
+        pages: newPages,
+        currentPage: newCurrentPage,
+        totalPages: newPages.length,
+        isDirty: false,
+        lastSaved: new Date(),
+      }))
+    } catch {
+      // 저장 실패 시 상태만 업데이트 (다음 저장 시 재시도)
+      setState((prev) => ({
         ...prev,
         pages: newPages,
         currentPage: newCurrentPage,
         totalPages: newPages.length,
         isDirty: true,
-      }
-    })
+      }))
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleGenerate = async (mode: PageGenerateMode) => {

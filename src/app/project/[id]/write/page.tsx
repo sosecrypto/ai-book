@@ -311,12 +311,17 @@ export default function WritePage() {
     const chapterOutline = getCurrentChapterOutline()
     if (!chapterOutline) return
 
+    // 기존 챕터 정보 유지 (id 포함)
+    const existingChapter = state.chapters.get(state.currentChapter)
+
     const updatedChapter: Chapter = {
+      ...existingChapter,
+      id: existingChapter?.id || chapterId || undefined,
       number: state.currentChapter,
       title: chapterOutline.title,
       content,
       status: 'writing',
-      revisions: []
+      revisions: existingChapter?.revisions || []
     }
 
     setState(prev => {
@@ -326,7 +331,7 @@ export default function WritePage() {
     })
 
     await saveChapter(state.currentChapter, updatedChapter)
-  }, [state.currentChapter, projectId])
+  }, [state.currentChapter, state.chapters, chapterId])
 
   const handlePageAIGenerate = useCallback(async (mode: PageGenerateMode, pageNumber: number, context: string): Promise<string> => {
     if (!chapterId) {
@@ -638,6 +643,7 @@ export default function WritePage() {
 
             {chapterId && currentChapterOutline && (
               <PageEditor
+                key={`${chapterId}-${state.currentChapter}-${editorMode}-${currentChapter?.content?.length || 0}`}
                 projectId={projectId}
                 chapterId={chapterId}
                 chapterNumber={state.currentChapter}

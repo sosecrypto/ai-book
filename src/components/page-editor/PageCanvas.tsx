@@ -110,8 +110,8 @@ export default function PageCanvas({
             {pageNumber}
           </span>
           <div className="flex items-center gap-2">
-            {/* 페이지 삭제 버튼 (2페이지 이상일 때만 표시) */}
-            {isActive && pages.length > 1 && (
+            {/* 페이지 삭제 버튼 */}
+            {isActive && (
               <button
                 onClick={() => {
                   if (window.confirm(`${pageNumber}페이지를 삭제하시겠습니까?`))  {
