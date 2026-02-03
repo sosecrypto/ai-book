@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import StageHeader from '@/components/project/StageHeader'
 import { SettingsStep, GeneratingStep, EditStep, ConfirmStep } from '@/components/outline'
+import { BibleEditor } from '@/components/bible'
 import { BookOutline } from '@/types/book'
+
+type MainTab = 'outline' | 'bible'
 
 interface OutlineState {
   step: 'settings' | 'generate' | 'edit' | 'confirm'
@@ -22,6 +25,8 @@ export default function OutlinePage() {
   const router = useRouter()
   const projectId = params.id as string
 
+  const [mainTab, setMainTab] = useState<MainTab>('outline')
+  const [projectType, setProjectType] = useState<string>('fiction')
   const [state, setState] = useState<OutlineState>({
     step: 'settings',
     settings: {
@@ -44,6 +49,7 @@ export default function OutlinePage() {
       const res = await fetch(`/api/projects/${projectId}`)
       if (res.ok) {
         const { data: project } = await res.json()
+        setProjectType(project.type || 'fiction')
         if (project.outline) {
           setState(prev => ({
             ...prev,
@@ -207,6 +213,59 @@ export default function OutlinePage() {
       />
 
       <main className="max-w-4xl mx-auto px-8 py-12">
+        {/* 메인 탭 (목차/Bible) */}
+        <div className="flex gap-6 border-b border-neutral-200 dark:border-neutral-700 mb-8">
+          <button
+            onClick={() => setMainTab('outline')}
+            className={`pb-3 text-sm font-medium transition-colors relative ${
+              mainTab === 'outline'
+                ? 'text-neutral-900 dark:text-white'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+            }`}
+          >
+            목차
+            {mainTab === 'outline' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-white" />
+            )}
+          </button>
+          <button
+            onClick={() => setMainTab('bible')}
+            className={`pb-3 text-sm font-medium transition-colors relative ${
+              mainTab === 'bible'
+                ? 'text-neutral-900 dark:text-white'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+            }`}
+          >
+            Book Bible
+            <span className="ml-2 text-xs px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 rounded">
+              NEW
+            </span>
+            {mainTab === 'bible' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-white" />
+            )}
+          </button>
+        </div>
+
+        {/* Bible 탭 콘텐츠 */}
+        {mainTab === 'bible' && (
+          <div className="mb-8">
+            <div className="mb-6">
+              <h2 className="text-lg font-medium text-neutral-900 dark:text-white mb-2">
+                Book Bible
+              </h2>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                {projectType === 'fiction'
+                  ? '캐릭터, 세계관, 플롯, 복선 등을 정의하여 AI가 일관성 있게 스토리를 작성하도록 합니다.'
+                  : '핵심 메시지, 프레임워크, 사례 등을 정의하여 AI가 일관된 톤과 내용을 유지하도록 합니다.'}
+              </p>
+            </div>
+            <BibleEditor projectId={projectId} projectType={projectType} />
+          </div>
+        )}
+
+        {/* 목차 탭 콘텐츠 */}
+        {mainTab === 'outline' && (
+          <>
         {/* Progress Steps */}
         <div className="mb-16">
           <div className="flex items-center justify-between">
@@ -397,6 +456,8 @@ export default function OutlinePage() {
 
         {state.step === 'confirm' && state.outline && !viewingStep && (
           <ConfirmStep outline={state.outline} />
+        )}
+          </>
         )}
       </main>
     </div>
