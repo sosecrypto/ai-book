@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import type {
   BookBible,
   FictionBible,
@@ -8,6 +9,7 @@ import type {
   FictionCharacter,
 } from '@/types/book-bible'
 import { isFictionBible, createEmptyBible } from '@/types/book-bible'
+import { useToast } from '@/hooks/useToast'
 
 interface BiblePanelProps {
   projectId: string
@@ -39,6 +41,7 @@ export default function BiblePanel({
   currentChapter,
   chapterContent,
 }: BiblePanelProps) {
+  const { showToast } = useToast()
   const [bible, setBible] = useState<BookBible | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'view' | 'extract' | 'validate'>('view')
@@ -51,12 +54,9 @@ export default function BiblePanel({
     summary: string
   } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [showExtractPrompt, setShowExtractPrompt] = useState(false)
 
-  useEffect(() => {
-    loadBible()
-  }, [projectId])
-
-  const loadBible = async () => {
+  const loadBible = useCallback(async () => {
     setIsLoading(true)
     try {
       const res = await fetch(`/api/projects/${projectId}/bible`)
@@ -69,16 +69,37 @@ export default function BiblePanel({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [projectId, projectType])
+
+  useEffect(() => {
+    loadBible()
+  }, [loadBible])
+
+  // 자동추출 프롬프트 표시 로직
+  useEffect(() => {
+    if (bible && chapterContent && chapterContent.length >= 500) {
+      const isEmpty = isFictionBible(bible)
+        ? bible.characters.length === 0 && bible.worldSettings.length === 0
+        : bible.coreMessages.length === 0 && bible.frameworks.length === 0
+
+      if (isEmpty) {
+        setShowExtractPrompt(true)
+      }
+    }
+  }, [bible, chapterContent])
 
   const handleExtract = async () => {
     if (!chapterContent || chapterContent.length < 100) {
-      alert('추출할 내용이 부족합니다. 최소 100자 이상의 내용이 필요합니다.')
+      showToast({
+        type: 'warning',
+        message: '추출할 내용이 부족합니다. 최소 100자 이상의 내용이 필요합니다.',
+      })
       return
     }
 
     setIsExtracting(true)
     setExtractedItems(null)
+    setShowExtractPrompt(false)
     try {
       const res = await fetch(`/api/projects/${projectId}/bible/extract`, {
         method: 'POST',
@@ -95,9 +116,17 @@ export default function BiblePanel({
           ...data.data.extracted,
         })
         setActiveTab('extract')
+        showToast({
+          type: 'success',
+          message: '설정이 추출되었습니다. 추출 결과 탭에서 확인하세요.',
+        })
       }
     } catch {
-      alert('추출에 실패했습니다.')
+      showToast({
+        type: 'error',
+        message: '추출에 실패했습니다. 다시 시도해주세요.',
+        action: { label: '다시 시도', onClick: handleExtract },
+      })
     } finally {
       setIsExtracting(false)
     }
@@ -105,7 +134,10 @@ export default function BiblePanel({
 
   const handleValidate = async () => {
     if (!chapterContent || chapterContent.length < 100) {
-      alert('검증할 내용이 부족합니다.')
+      showToast({
+        type: 'warning',
+        message: '검증할 내용이 부족합니다. 최소 100자 이상의 내용이 필요합니다.',
+      })
       return
     }
 
@@ -124,9 +156,24 @@ export default function BiblePanel({
       if (data.success) {
         setValidationResult(data.data)
         setActiveTab('validate')
+        if (data.data.isValid) {
+          showToast({
+            type: 'success',
+            message: '일관성 검증을 통과했습니다!',
+          })
+        } else {
+          showToast({
+            type: 'warning',
+            message: `${data.data.issues.length}개의 검토 사항이 발견되었습니다.`,
+          })
+        }
       }
     } catch {
-      alert('검증에 실패했습니다.')
+      showToast({
+        type: 'error',
+        message: '검증에 실패했습니다. 다시 시도해주세요.',
+        action: { label: '다시 시도', onClick: handleValidate },
+      })
     } finally {
       setIsValidating(false)
     }
@@ -194,6 +241,10 @@ export default function BiblePanel({
 
       if (res.ok) {
         setBible(updatedBible)
+        showToast({
+          type: 'success',
+          message: 'Bible에 추가되었습니다.',
+        })
         // 추가된 항목 제거
         if (extractedItems) {
           const itemWithId = item as { id: string }
@@ -208,7 +259,10 @@ export default function BiblePanel({
         }
       }
     } catch {
-      alert('저장에 실패했습니다.')
+      showToast({
+        type: 'error',
+        message: '저장에 실패했습니다. 다시 시도해주세요.',
+      })
     } finally {
       setIsSaving(false)
     }
@@ -251,6 +305,33 @@ export default function BiblePanel({
           </button>
         </div>
       </div>
+
+      {/* 자동추출 프롬프트 */}
+      {showExtractPrompt && (
+        <div className="mx-3 mb-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded">
+          <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200">
+            챕터에서 설정을 자동으로 추출할 수 있어요!
+          </p>
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">
+            캐릭터, 세계관 등을 AI가 자동으로 찾아냅니다.
+          </p>
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => { handleExtract(); setShowExtractPrompt(false) }}
+              disabled={isExtracting}
+              className="flex-1 px-3 py-1.5 text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors rounded"
+            >
+              {isExtracting ? '추출 중...' : '지금 추출하기'}
+            </button>
+            <button
+              onClick={() => setShowExtractPrompt(false)}
+              className="px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+            >
+              나중에
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 탭 */}
       <div className="flex-none flex border-b border-neutral-200 dark:border-neutral-700">
@@ -297,7 +378,7 @@ export default function BiblePanel({
         )}
 
         {activeTab === 'validate' && (
-          <ValidationResultTab result={validationResult} />
+          <ValidationResultTab result={validationResult} projectId={projectId} />
         )}
       </div>
     </div>
@@ -573,8 +654,10 @@ function ExtractResultTab({
 // 검증 결과 탭
 function ValidationResultTab({
   result,
+  projectId,
 }: {
   result: { isValid: boolean; issues: ValidationIssue[]; summary: string } | null
+  projectId: string
 }) {
   if (!result) {
     return (
@@ -659,8 +742,42 @@ function ValidationResultTab({
                   제안: {issue.suggestion}
                 </p>
               )}
+              {/* 액션 버튼 */}
+              <div className="mt-2 flex gap-2">
+                <Link href={`/project/${projectId}/outline?tab=bible`}>
+                  <button className="px-2 py-1 text-[10px] text-violet-600 dark:text-violet-400 border border-violet-300 dark:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded transition-colors">
+                    Bible 수정
+                  </button>
+                </Link>
+              </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 해결 방법 안내 */}
+      {!result.isValid && (
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+          <h5 className="text-xs font-medium text-blue-800 dark:text-blue-200 flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            해결 방법
+          </h5>
+          <ul className="text-[11px] mt-2 space-y-1 text-blue-700 dark:text-blue-300">
+            <li className="flex items-start gap-1.5">
+              <span className="text-blue-500 dark:text-blue-400 font-bold">1.</span>
+              <span>내용이 틀렸다면 본문을 수정하세요</span>
+            </li>
+            <li className="flex items-start gap-1.5">
+              <span className="text-blue-500 dark:text-blue-400 font-bold">2.</span>
+              <span>설정이 변경되었다면 &quot;Bible 수정&quot;으로 업데이트하세요</span>
+            </li>
+            <li className="flex items-start gap-1.5">
+              <span className="text-blue-500 dark:text-blue-400 font-bold">3.</span>
+              <span>의도된 변화라면 무시해도 됩니다</span>
+            </li>
+          </ul>
         </div>
       )}
     </div>

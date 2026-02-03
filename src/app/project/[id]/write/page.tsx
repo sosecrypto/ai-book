@@ -12,6 +12,8 @@ import { BiblePanel } from '@/components/bible'
 import MemoButton from '@/components/page-editor/MemoButton'
 import { BookOutline, ChapterOutline, Chapter, ParsedFile, SplitChapter, PageGenerateMode } from '@/types/book'
 import { textToHtml } from '@/lib/utils/text-to-html'
+import { useToast } from '@/hooks/useToast'
+import type { BookBible, FictionBible, SelfHelpBible } from '@/types/book-bible'
 
 interface WriteState {
   outline: BookOutline | null
@@ -28,6 +30,7 @@ export default function WritePage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.id as string
+  const { showToast } = useToast()
 
   const [state, setState] = useState<WriteState>({
     outline: null,
@@ -49,11 +52,53 @@ export default function WritePage() {
   const [showBiblePanel, setShowBiblePanel] = useState(false)
   const [memoCount, setMemoCount] = useState(0)
   const [projectType, setProjectType] = useState<string>('fiction')
+  const [isFirstBibleVisit, setIsFirstBibleVisit] = useState(false)
+  const [hasBibleContent, setHasBibleContent] = useState(false)
+
+  // Bible이 지원되는 타입인지 확인
+  const isBibleSupported = projectType === 'fiction' || projectType === 'selfhelp'
 
   useEffect(() => {
     loadProjectData()
     fetchMemoCount()
   }, [projectId])
+
+  // Bible 지원 타입일 때만 Bible 관련 초기화 실행
+  useEffect(() => {
+    if (isBibleSupported) {
+      checkBibleVisit()
+      fetchBibleStatus()
+      // Bible 지원 타입이면 패널 기본 열림
+      setShowBiblePanel(true)
+    }
+  }, [projectType])
+
+  const checkBibleVisit = () => {
+    const visited = localStorage.getItem(`bible-visited-${projectId}`)
+    if (!visited) {
+      setIsFirstBibleVisit(true)
+      localStorage.setItem(`bible-visited-${projectId}`, 'true')
+    }
+  }
+
+  const fetchBibleStatus = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/bible`)
+      const data = await res.json()
+      if (data.success && data.data) {
+        const bible = data.data as BookBible
+        if (bible.type === 'fiction') {
+          const fBible = bible as FictionBible
+          setHasBibleContent(fBible.characters.length > 0 || fBible.worldSettings.length > 0 || fBible.plotThreads.length > 0)
+        } else {
+          const sBible = bible as SelfHelpBible
+          setHasBibleContent(sBible.coreMessages.length > 0 || sBible.frameworks.length > 0)
+        }
+      }
+    } catch {
+      // Bible 로드 실패 무시
+    }
+  }
 
   const fetchMemoCount = async () => {
     try {
@@ -194,6 +239,15 @@ export default function WritePage() {
 
     const currentChapter = getCurrentChapter()
     const existingContent = currentChapter?.content || ''
+
+    // Bible 사용 여부 표시 (Bible 지원 타입일 때만)
+    if (isBibleSupported && hasBibleContent) {
+      showToast({
+        type: 'info',
+        message: 'Bible 설정을 반영하여 AI가 작성합니다',
+        action: { label: 'Bible 보기', onClick: () => setShowBiblePanel(true) },
+      })
+    }
 
     // continue 모드일 때 기존 내용을 스트리밍 콘텐츠 초기값으로 설정
     setState(prev => ({
@@ -571,20 +625,35 @@ export default function WritePage() {
           가져오기
         </button>
 
-        {/* Bible Button */}
-        <button
-          onClick={() => setShowBiblePanel(!showBiblePanel)}
-          className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
-            showBiblePanel
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-          }`}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-          Bible
-        </button>
+        {/* Bible Button - fiction/selfhelp 타입에만 표시 */}
+        {isBibleSupported && (
+          <button
+            onClick={() => {
+              setShowBiblePanel(!showBiblePanel)
+              setIsFirstBibleVisit(false)
+            }}
+            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors relative ${
+              showBiblePanel
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+            } ${isFirstBibleVisit ? 'animate-pulse' : ''}`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            Bible
+            {isFirstBibleVisit && (
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-white rounded-full">
+                NEW
+              </span>
+            )}
+            {hasBibleContent && state.isWriting && (
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 py-0.5 text-[9px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 rounded whitespace-nowrap">
+                적용 중
+              </span>
+            )}
+          </button>
+        )}
 
         {/* Memo Button */}
         <MemoButton
@@ -786,8 +855,8 @@ export default function WritePage() {
         currentChapter={state.currentChapter}
       />
 
-      {/* Bible Panel */}
-      {showBiblePanel && (
+      {/* Bible Panel - fiction/selfhelp 타입에만 표시 */}
+      {isBibleSupported && showBiblePanel && (
         <div className="fixed top-0 right-0 h-full w-80 bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-700 shadow-xl z-40 flex flex-col">
           <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-700">
             <h3 className="text-sm font-medium text-neutral-900 dark:text-white">Book Bible</h3>

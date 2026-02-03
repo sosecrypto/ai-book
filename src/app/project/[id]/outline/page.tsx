@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import StageHeader from '@/components/project/StageHeader'
 import { SettingsStep, GeneratingStep, EditStep, ConfirmStep } from '@/components/outline'
-import { BibleEditor } from '@/components/bible'
+import { BibleEditor, BibleOnboardingCard } from '@/components/bible'
 import { BookOutline } from '@/types/book'
 
 type MainTab = 'outline' | 'bible'
@@ -27,6 +27,9 @@ export default function OutlinePage() {
 
   const [mainTab, setMainTab] = useState<MainTab>('outline')
   const [projectType, setProjectType] = useState<string>('fiction')
+
+  // Bible이 지원되는 타입인지 확인
+  const isBibleSupported = projectType === 'fiction' || projectType === 'selfhelp'
   const [state, setState] = useState<OutlineState>({
     step: 'settings',
     settings: {
@@ -213,42 +216,45 @@ export default function OutlinePage() {
       />
 
       <main className="max-w-4xl mx-auto px-8 py-12">
-        {/* 메인 탭 (목차/Bible) */}
-        <div className="flex gap-6 border-b border-neutral-200 dark:border-neutral-700 mb-8">
-          <button
-            onClick={() => setMainTab('outline')}
-            className={`pb-3 text-sm font-medium transition-colors relative ${
-              mainTab === 'outline'
-                ? 'text-neutral-900 dark:text-white'
-                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
-            }`}
-          >
-            목차
-            {mainTab === 'outline' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-white" />
-            )}
-          </button>
-          <button
-            onClick={() => setMainTab('bible')}
-            className={`pb-3 text-sm font-medium transition-colors relative ${
-              mainTab === 'bible'
-                ? 'text-neutral-900 dark:text-white'
-                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
-            }`}
-          >
-            Book Bible
-            <span className="ml-2 text-xs px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 rounded">
-              NEW
-            </span>
-            {mainTab === 'bible' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-white" />
-            )}
-          </button>
-        </div>
+        {/* 메인 탭 (목차/Bible) - Bible은 fiction/selfhelp 타입에만 표시 */}
+        {isBibleSupported ? (
+          <div className="flex gap-6 border-b border-neutral-200 dark:border-neutral-700 mb-8">
+            <button
+              onClick={() => setMainTab('outline')}
+              className={`pb-3 text-sm font-medium transition-colors relative ${
+                mainTab === 'outline'
+                  ? 'text-neutral-900 dark:text-white'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+              }`}
+            >
+              목차
+              {mainTab === 'outline' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-white" />
+              )}
+            </button>
+            <button
+              onClick={() => setMainTab('bible')}
+              className={`pb-3 text-sm font-medium transition-colors relative ${
+                mainTab === 'bible'
+                  ? 'text-neutral-900 dark:text-white'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+              }`}
+            >
+              Book Bible
+              <span className="ml-2 text-xs px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 rounded">
+                NEW
+              </span>
+              {mainTab === 'bible' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-white" />
+              )}
+            </button>
+          </div>
+        ) : null}
 
-        {/* Bible 탭 콘텐츠 */}
-        {mainTab === 'bible' && (
+        {/* Bible 탭 콘텐츠 - fiction/selfhelp 타입에만 표시 */}
+        {isBibleSupported && mainTab === 'bible' && (
           <div className="mb-8">
+            <BibleOnboardingCard projectId={projectId} projectType={projectType} />
             <div className="mb-6">
               <h2 className="text-lg font-medium text-neutral-900 dark:text-white mb-2">
                 Book Bible
