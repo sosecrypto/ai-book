@@ -5,8 +5,10 @@ import { useParams, useRouter } from 'next/navigation'
 import StageHeader from '@/components/project/StageHeader'
 import { ChapterList, ChapterEditor } from '@/components/write'
 import { PageEditor } from '@/components/page-editor'
+import { AIChatPanel } from '@/components/ai-chat'
 import { FileUploader, ChapterSplitter } from '@/components/upload'
 import { MemoPanel } from '@/components/MemoPanel'
+import { BiblePanel } from '@/components/bible'
 import MemoButton from '@/components/page-editor/MemoButton'
 import { BookOutline, ChapterOutline, Chapter, ParsedFile, SplitChapter, PageGenerateMode } from '@/types/book'
 import { textToHtml } from '@/lib/utils/text-to-html'
@@ -41,10 +43,12 @@ export default function WritePage() {
   const [importStep, setImportStep] = useState<ImportStep>('upload')
   const [parsedFile, setParsedFile] = useState<ParsedFile | null>(null)
   const [isImporting, setIsImporting] = useState(false)
-  const [editorMode, setEditorMode] = useState<EditorMode>('page')
+  const [editorMode, setEditorMode] = useState<EditorMode>('chapter')
   const [chapterId, setChapterId] = useState<string | null>(null)
   const [showMemoPanel, setShowMemoPanel] = useState(false)
+  const [showBiblePanel, setShowBiblePanel] = useState(false)
   const [memoCount, setMemoCount] = useState(0)
+  const [projectType, setProjectType] = useState<string>('fiction')
 
   useEffect(() => {
     loadProjectData()
@@ -91,6 +95,7 @@ export default function WritePage() {
           router.push(`/project/${projectId}/outline`)
           return
         }
+        setProjectType(project.type || 'fiction')
         const chaptersMap = new Map<number, Chapter>()
         let firstChapterId: string | null = null
         project.chapters?.forEach((ch: Chapter) => {
@@ -128,7 +133,7 @@ export default function WritePage() {
   const saveChapter = async (number: number, chapter: Chapter) => {
     setIsSaving(true)
     try {
-      await fetch(`/api/projects/${projectId}/chapters`, {
+      const res = await fetch(`/api/projects/${projectId}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -138,6 +143,24 @@ export default function WritePage() {
           status: chapter.status || 'writing'
         })
       })
+      if (res.ok) {
+        const { data } = await res.json()
+        // 현재 챕터의 ID가 없으면 설정
+        if (data?.id && number === state.currentChapter && !chapterId) {
+          setChapterId(data.id)
+        }
+        // 챕터 로컬 상태에 ID 업데이트
+        if (data?.id) {
+          setState(prev => {
+            const newChapters = new Map(prev.chapters)
+            const existing = newChapters.get(number)
+            if (existing && !existing.id) {
+              newChapters.set(number, { ...existing, id: data.id })
+            }
+            return { ...prev, chapters: newChapters }
+          })
+        }
+      }
       setLastSaved(new Date())
     } catch {
       setError('Failed to save chapter.')
@@ -165,11 +188,19 @@ export default function WritePage() {
     })
   }
 
-  const handleAIWrite = async () => {
+  const handleAIWrite = async (mode: 'new' | 'continue' = 'new') => {
     const chapterOutline = getCurrentChapterOutline()
     if (!chapterOutline || state.isWriting) return
 
-    setState(prev => ({ ...prev, isWriting: true, streamingContent: '' }))
+    const currentChapter = getCurrentChapter()
+    const existingContent = currentChapter?.content || ''
+
+    // continue 모드일 때 기존 내용을 스트리밍 콘텐츠 초기값으로 설정
+    setState(prev => ({
+      ...prev,
+      isWriting: true,
+      streamingContent: mode === 'continue' ? existingContent : ''
+    }))
     setError(null)
 
     try {
@@ -191,7 +222,9 @@ export default function WritePage() {
         body: JSON.stringify({
           chapterNumber: state.currentChapter,
           chapterOutline,
-          previousChapters
+          previousChapters,
+          mode,
+          existingContent: mode === 'continue' ? existingContent : undefined
         })
       })
 
@@ -209,16 +242,24 @@ export default function WritePage() {
         const chunk = decoder.decode(value, { stream: true })
         fullContent += chunk
         // 스트리밍 중에도 HTML 변환 적용 (실시간 문단 표시)
-        setState(prev => ({ ...prev, streamingContent: textToHtml(fullContent) }))
+        // continue 모드면 기존 내용 + 새 내용
+        const displayContent = mode === 'continue'
+          ? existingContent + textToHtml(fullContent)
+          : textToHtml(fullContent)
+        setState(prev => ({ ...prev, streamingContent: displayContent }))
       }
 
       // 최종 콘텐츠를 HTML로 변환
       const htmlContent = textToHtml(fullContent)
+      // continue 모드면 기존 내용에 새 내용 추가
+      const finalContent = mode === 'continue'
+        ? existingContent + htmlContent
+        : htmlContent
 
       const updatedChapter: Chapter = {
         number: state.currentChapter,
         title: chapterOutline.title,
-        content: htmlContent,
+        content: finalContent,
         status: 'writing',
         revisions: []
       }
@@ -530,6 +571,21 @@ export default function WritePage() {
           가져오기
         </button>
 
+        {/* Bible Button */}
+        <button
+          onClick={() => setShowBiblePanel(!showBiblePanel)}
+          className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+            showBiblePanel
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          Bible
+        </button>
+
         {/* Memo Button */}
         <MemoButton
           onClick={() => setShowMemoPanel(!showMemoPanel)}
@@ -577,6 +633,20 @@ export default function WritePage() {
               onPreviousChapter={handlePreviousChapter}
               onNextChapter={handleNextChapter}
             />
+
+            {/* AI 채팅 패널 - 챕터 모드 */}
+            {chapterId && (
+              <AIChatPanel
+                projectId={projectId}
+                chapterId={chapterId}
+                chapterNumber={state.currentChapter}
+                pages={[]}
+                getPageContent={() => currentChapter?.content || ''}
+                onApplyContent={(content) => {
+                  handleContentChange(content)
+                }}
+              />
+            )}
           </>
         ) : (
           <>
@@ -715,6 +785,31 @@ export default function WritePage() {
         onClose={() => setShowMemoPanel(false)}
         currentChapter={state.currentChapter}
       />
+
+      {/* Bible Panel */}
+      {showBiblePanel && (
+        <div className="fixed top-0 right-0 h-full w-80 bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-700 shadow-xl z-40 flex flex-col">
+          <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-700">
+            <h3 className="text-sm font-medium text-neutral-900 dark:text-white">Book Bible</h3>
+            <button
+              onClick={() => setShowBiblePanel(false)}
+              className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <BiblePanel
+              projectId={projectId}
+              projectType={projectType}
+              currentChapter={state.currentChapter}
+              chapterContent={currentChapter?.content?.replace(/<[^>]*>/g, ' ') || ''}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
