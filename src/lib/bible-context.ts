@@ -104,6 +104,14 @@ function buildFictionContext(
     sections.push(settingText)
   }
 
+  // 3.5 장르별 설정
+  if (bible.subgenre && bible.subgenre !== 'general') {
+    const genreContext = buildGenreSpecificContext(bible)
+    if (genreContext) {
+      sections.push(genreContext)
+    }
+  }
+
   // 4. 진행 중인 플롯 라인
   const activeThreads = bible.plotThreads.filter(p =>
     p.status !== 'resolved' &&
@@ -381,4 +389,181 @@ function getEvidenceTypeName(type: string): string {
     historical: '역사적',
   }
   return map[type] || type
+}
+
+/**
+ * 장르별 설정 컨텍스트 빌드
+ */
+function buildGenreSpecificContext(bible: FictionBible): string {
+  const sections: string[] = []
+
+  // 판타지 설정
+  if (bible.subgenre === 'fantasy' && bible.fantasySettings) {
+    const fs = bible.fantasySettings
+    let text = `## 판타지 설정\n`
+
+    if (fs.magicSystems.length > 0) {
+      text += `### 마법 체계\n`
+      fs.magicSystems.forEach(m => {
+        text += `- **${m.name}**: ${m.description}\n`
+        if (m.source) text += `  원천: ${m.source}\n`
+        if (m.ranks && m.ranks.length > 0) text += `  등급: ${m.ranks.join(' → ')}\n`
+        if (m.elements && m.elements.length > 0) text += `  원소: ${m.elements.join(', ')}\n`
+      })
+    }
+
+    if (fs.races.length > 0) {
+      text += `### 종족\n`
+      fs.races.slice(0, 5).forEach(r => {
+        text += `- **${r.name}**: ${r.description}`
+        if (r.traits && r.traits.length > 0) text += ` (특성: ${r.traits.join(', ')})`
+        text += `\n`
+      })
+    }
+
+    if (fs.powerLevels.length > 0) {
+      text += `### 파워 레벨\n`
+      text += fs.powerLevels
+        .sort((a, b) => a.rank - b.rank)
+        .map(p => `${p.rank}. ${p.name}`)
+        .join(' → ') + '\n'
+    }
+
+    sections.push(text)
+  }
+
+  // 무협 설정
+  if (bible.subgenre === 'martial-arts' && bible.martialArtsSettings) {
+    const ms = bible.martialArtsSettings
+    let text = `## 무협 설정\n`
+
+    if (ms.factions.length > 0) {
+      text += `### 문파/세가\n`
+      ms.factions.forEach(f => {
+        const alignmentMap: Record<string, string> = {
+          orthodox: '정파', unorthodox: '사파', neutral: '중립', evil: '마도'
+        }
+        text += `- **${f.name}** (${alignmentMap[f.alignment] || f.alignment}): ${f.description}`
+        if (f.leader) text += ` [장문인: ${f.leader}]`
+        text += `\n`
+      })
+    }
+
+    if (ms.techniques.length > 0) {
+      text += `### 주요 무공\n`
+      const rankMap: Record<string, string> = {
+        legendary: '절세', supreme: '절정', 'first-class': '일류',
+        'second-class': '이류', 'third-class': '삼류'
+      }
+      ms.techniques.slice(0, 10).forEach(t => {
+        text += `- **${t.name}** (${rankMap[t.rank] || t.rank}): ${t.description}\n`
+        if (t.moves && t.moves.length > 0) text += `  초식: ${t.moves.join(', ')}\n`
+      })
+    }
+
+    if (ms.internalEnergies.length > 0) {
+      text += `### 내공심법\n`
+      ms.internalEnergies.forEach(e => {
+        text += `- **${e.name}**: ${e.description}\n`
+        if (e.stages && e.stages.length > 0) text += `  경지: ${e.stages.join(' → ')}\n`
+      })
+    }
+
+    sections.push(text)
+  }
+
+  // 로맨스 판타지 설정
+  if (bible.subgenre === 'romance-fantasy' && bible.romanceFantasySettings) {
+    const rf = bible.romanceFantasySettings
+    let text = `## 로맨스 판타지 설정\n`
+
+    if (rf.nobleFamilies.length > 0) {
+      text += `### 귀족 가문\n`
+      const rankMap: Record<string, string> = {
+        royal: '황족', duke: '공작', marquis: '후작', count: '백작',
+        viscount: '자작', baron: '남작', knight: '기사'
+      }
+      rf.nobleFamilies.forEach(f => {
+        text += `- **${f.name}** (${rankMap[f.rank] || f.rank}): ${f.description}`
+        if (f.territory) text += ` [영지: ${f.territory}]`
+        text += `\n`
+      })
+    }
+
+    if (rf.relationships.length > 0) {
+      text += `### 관계도\n`
+      const typeMap: Record<string, string> = {
+        romantic: '연인', rival: '라이벌', friend: '친구',
+        enemy: '적', family: '가족', unrequited: '짝사랑'
+      }
+      const stageMap: Record<string, string> = {
+        strangers: '모르는 사이', acquaintance: '아는 사이', interest: '관심',
+        tension: '긴장', confession: '고백', dating: '연인',
+        engaged: '약혼', married: '결혼'
+      }
+      rf.relationships.forEach(r => {
+        text += `- ${r.character1} ↔ ${r.character2}: ${typeMap[r.type] || r.type} (${stageMap[r.stage] || r.stage})\n`
+      })
+    }
+
+    if (rf.originalWork?.title) {
+      text += `### 원작 정보 (빙의물)\n`
+      text += `- 원작: ${rf.originalWork.title}\n`
+      if (rf.originalWork.currentCharacter) text += `- 빙의 캐릭터: ${rf.originalWork.currentCharacter}\n`
+      if (rf.originalWork.plotKnowledge && rf.originalWork.plotKnowledge.length > 0) {
+        text += `- 알고 있는 전개:\n${rf.originalWork.plotKnowledge.map(p => `  - ${p}`).join('\n')}\n`
+      }
+    }
+
+    sections.push(text)
+  }
+
+  // 헌터물 설정
+  if (bible.subgenre === 'hunter' && bible.hunterSettings) {
+    const hs = bible.hunterSettings
+    let text = `## 헌터물 설정\n`
+
+    if (hs.hunterRanks.length > 0) {
+      text += `### 헌터 등급\n`
+      text += hs.hunterRanks
+        .sort((a, b) => a.rank - b.rank)
+        .map(r => {
+          let line = `${r.name}`
+          if (r.population) line += ` (${r.population})`
+          return line
+        })
+        .join(' → ') + '\n'
+    }
+
+    if (hs.guilds.length > 0) {
+      text += `### 길드\n`
+      hs.guilds.forEach(g => {
+        text += `- **${g.name}**`
+        if (g.rank) text += ` (${g.rank}급)`
+        text += `: ${g.description}`
+        if (g.leader) text += ` [길드장: ${g.leader}]`
+        text += `\n`
+      })
+    }
+
+    if (hs.skills.length > 0) {
+      text += `### 주요 스킬\n`
+      hs.skills.slice(0, 10).forEach(s => {
+        text += `- **${s.name}** (${s.rank}): ${s.description}\n`
+      })
+    }
+
+    if (hs.gates.length > 0) {
+      text += `### 게이트/던전\n`
+      hs.gates.slice(0, 5).forEach(g => {
+        text += `- **${g.name || g.type}** (${g.rank}급): ${g.description}`
+        if (g.boss) text += ` [보스: ${g.boss}]`
+        text += `\n`
+      })
+    }
+
+    sections.push(text)
+  }
+
+  return sections.join('\n')
 }
