@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import type { BookBible } from '@/types/book-bible'
 import { createEmptyBible } from '@/types/book-bible'
+
+// Bible 기본 스키마 검증 (완전한 검증은 타입으로)
+const BibleSchema = z.object({
+  type: z.enum(['fiction', 'selfhelp']),
+  version: z.number().optional(),
+}).passthrough() // 나머지 필드 허용
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -51,7 +58,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const bible: BookBible = await request.json()
+    const body = await request.json()
+
+    // 입력 유효성 검사
+    const parseResult = BibleSchema.safeParse(body)
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { success: false, error: '잘못된 Bible 형식입니다.', details: parseResult.error.flatten() },
+        { status: 400 }
+      )
+    }
+
+    const bible = body as BookBible
 
     const project = await prisma.project.findUnique({
       where: { id },

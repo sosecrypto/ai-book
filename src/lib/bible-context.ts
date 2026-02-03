@@ -13,6 +13,7 @@ import type {
   WorldSetting,
   PlotThread,
   CaseStudy,
+  Evidence,
 } from '@/types/book-bible'
 import { isFictionBible, isSelfHelpBible } from '@/types/book-bible'
 
@@ -380,7 +381,7 @@ function getCaseTypeName(type: CaseStudy['type']): string {
   return map[type] || type
 }
 
-function getEvidenceTypeName(type: string): string {
+function getEvidenceTypeName(type: Evidence['type']): string {
   const map: Record<string, string> = {
     research: '연구',
     statistics: '통계',

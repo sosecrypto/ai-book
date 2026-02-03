@@ -66,7 +66,7 @@ export default function FictionBibleEditor({ bible, onChange }: FictionBibleEdit
   const tabs: { id: TabType; label: string; count?: number }[] = [
     { id: 'characters', label: '캐릭터', count: bible.characters.length },
     { id: 'world', label: '세계관', count: bible.worldSettings.length },
-    ...(hasGenreSettings ? [{ id: 'genre' as TabType, label: subgenreLabels[bible.subgenre] || '장르', count: getGenreSettingsCount() }] : []),
+    ...(hasGenreSettings && bible.subgenre ? [{ id: 'genre' as TabType, label: subgenreLabels[bible.subgenre] || '장르', count: getGenreSettingsCount() }] : []),
     { id: 'plot', label: '플롯', count: bible.plotThreads.length },
     { id: 'foreshadowing', label: '복선', count: bible.foreshadowing.length },
     { id: 'style', label: '문체' },

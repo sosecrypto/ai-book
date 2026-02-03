@@ -6,16 +6,12 @@ import type {
   BookBible,
   FictionBible,
   SelfHelpBible,
-  FictionCharacter,
-  WorldSetting,
-  CoreMessage,
-  Framework,
 } from '@/types/book-bible'
 import {
-  isFictionBible,
   generateBibleItemId,
   createEmptyBible,
 } from '@/types/book-bible'
+import { parseJSONFromText, AI_CONTENT_LIMITS } from '@/lib/utils/json-parser'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -23,7 +19,7 @@ interface RouteParams {
 
 const ExtractSchema = z.object({
   chapterNumber: z.number().int().positive(),
-  content: z.string().min(1).max(100000),
+  content: z.string().min(1).max(AI_CONTENT_LIMITS.SCHEMA_MAX),
 })
 
 // Fiction 추출 결과 타입
@@ -137,18 +133,6 @@ const SELFHELP_EXTRACT_PROMPT = `당신은 자기계발서 분석 전문가입�
 
 항목이 없으면 빈 배열을 반환하세요.`
 
-function parseJSON<T>(text: string, fallback: T): T {
-  try {
-    // JSON 블록 추출 시도
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]) as T
-    }
-    return fallback
-  } catch {
-    return fallback
-  }
-}
 
 // POST /api/projects/[id]/bible/extract - 챕터에서 Bible 항목 추출
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -195,11 +179,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         temperature: 0.3,
         maxTokens: 4096,
       },
-      `다음 챕터 ${chapterNumber}의 내용을 분석하세요:\n\n${content.substring(0, 30000)}`
+      `다음 챕터 ${chapterNumber}의 내용을 분석하세요:\n\n${content.substring(0, AI_CONTENT_LIMITS.EXTRACT_CONTENT)}`
     )
 
     if (isFiction) {
-      const extraction = parseJSON<FictionExtraction>(result, {
+      const extraction = parseJSONFromText<FictionExtraction>(result, {
         characters: [],
         settings: [],
         plotPoints: [],
@@ -257,7 +241,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         },
       })
     } else {
-      const extraction = parseJSON<SelfHelpExtraction>(result, {
+      const extraction = parseJSONFromText<SelfHelpExtraction>(result, {
         messages: [],
         frameworks: [],
         cases: [],

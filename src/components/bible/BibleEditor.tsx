@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { BookBible } from '@/types/book-bible'
 import { createEmptyBible } from '@/types/book-bible'
 import FictionBibleEditor from './FictionBibleEditor'
@@ -17,13 +17,9 @@ export default function BibleEditor({ projectId, projectType }: BibleEditorProps
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Bible 로드
-  useEffect(() => {
-    loadBible()
-  }, [projectId])
-
-  const loadBible = async () => {
+  const loadBible = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -40,7 +36,21 @@ export default function BibleEditor({ projectId, projectType }: BibleEditorProps
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [projectId, projectType])
+
+  // Bible 로드
+  useEffect(() => {
+    loadBible()
+  }, [loadBible])
+
+  // 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+      }
+    }
+  }, [])
 
   // Bible 저장
   const saveBible = useCallback(async (updatedBible: BookBible) => {
@@ -66,14 +76,17 @@ export default function BibleEditor({ projectId, projectType }: BibleEditorProps
     }
   }, [projectId])
 
-  // Bible 변경 핸들러 (자동 저장)
+  // Bible 변경 핸들러 (자동 저장 with 디바운스)
   const handleBibleChange = useCallback((updatedBible: BookBible) => {
     setBible(updatedBible)
-    // 디바운스 저장
-    const timer = setTimeout(() => {
+    // 이전 타이머 취소
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+    }
+    // 새 타이머 설정
+    saveTimerRef.current = setTimeout(() => {
       saveBible(updatedBible)
     }, 1000)
-    return () => clearTimeout(timer)
   }, [saveBible])
 
   if (isLoading) {

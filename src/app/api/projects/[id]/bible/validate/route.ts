@@ -3,14 +3,15 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import type { BookBible, FictionBible, SelfHelpBible } from '@/types/book-bible'
-import { isFictionBible, createEmptyBible } from '@/types/book-bible'
+import { isFictionBible } from '@/types/book-bible'
+import { parseJSONFromText, AI_CONTENT_LIMITS } from '@/lib/utils/json-parser'
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
 
 const ValidateSchema = z.object({
-  content: z.string().min(1).max(100000),
+  content: z.string().min(1).max(AI_CONTENT_LIMITS.SCHEMA_MAX),
   chapterNumber: z.number().int().positive().optional(),
 })
 
@@ -179,17 +180,6 @@ const SELFHELP_VALIDATE_PROMPT = `당신은 자기계발서 편집자입니다. 
 
 문제가 없으면 isValid: true와 빈 issues 배열을 반환하세요.`
 
-function parseJSON<T>(text: string, fallback: T): T {
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]) as T
-    }
-    return fallback
-  } catch {
-    return fallback
-  }
-}
 
 // POST /api/projects/[id]/bible/validate - 내용과 Bible 일관성 검증
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -262,10 +252,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         temperature: 0.2,
         maxTokens: 2048,
       },
-      `## Book Bible 설정\n${bibleContext}\n\n## 검증할 내용\n${content.substring(0, 15000)}`
+      `## Book Bible 설정\n${bibleContext}\n\n## 검증할 내용\n${content.substring(0, AI_CONTENT_LIMITS.VALIDATE_CONTENT)}`
     )
 
-    const validation = parseJSON<ValidationResult>(result, {
+    const validation = parseJSONFromText<ValidationResult>(result, {
       isValid: true,
       issues: [],
       summary: '검증을 완료할 수 없습니다.',

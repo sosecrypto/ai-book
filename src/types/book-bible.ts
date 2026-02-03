@@ -221,8 +221,8 @@ export interface NobleFamily {
 
 export interface RomanceRelationship {
   id: string
-  character1: string              // 캐릭터 ID
-  character2: string              // 캐릭터 ID
+  character1: string              // 캐릭터 이름 (UI에서 직접 입력)
+  character2: string              // 캐릭터 이름 (UI에서 직접 입력)
   type: 'romantic' | 'rival' | 'friend' | 'enemy' | 'family' | 'unrequited'
   stage: 'strangers' | 'acquaintance' | 'interest' | 'tension' | 'confession' | 'dating' | 'engaged' | 'married'
   description: string
@@ -326,7 +326,7 @@ export interface HunterSettings {
 
 export interface FictionBible extends BibleBase {
   type: 'fiction'
-  subgenre: FictionSubgenre       // 소설 하위 장르
+  subgenre?: FictionSubgenre      // 소설 하위 장르 (기존 데이터 호환을 위해 optional)
   characters: FictionCharacter[]
   worldSettings: WorldSetting[]
   plotThreads: PlotThread[]
@@ -504,9 +504,9 @@ export function createEmptySelfHelpBible(): SelfHelpBible {
   }
 }
 
-export function createEmptyBible(bookType: string): BookBible {
+export function createEmptyBible(bookType: string, subgenre?: FictionSubgenre): BookBible {
   if (bookType === 'fiction') {
-    return createEmptyFictionBible()
+    return createEmptyFictionBible(subgenre)
   }
   return createEmptySelfHelpBible()
 }
