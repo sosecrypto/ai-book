@@ -7,31 +7,111 @@ import type {
   WorldSetting,
   PlotThread,
   Foreshadowing,
+  FictionSubgenre,
+  FantasySettings,
+  MartialArtsSettings,
+  RomanceFantasySettings,
+  HunterSettings,
 } from '@/types/book-bible'
 import { generateBibleItemId } from '@/types/book-bible'
+import {
+  FantasySettingsEditor,
+  MartialArtsSettingsEditor,
+  RomanceFantasySettingsEditor,
+  HunterSettingsEditor,
+} from './genre'
 
 interface FictionBibleEditorProps {
   bible: FictionBible
   onChange: (bible: FictionBible) => void
 }
 
-type TabType = 'characters' | 'world' | 'plot' | 'foreshadowing' | 'style'
+type TabType = 'characters' | 'world' | 'plot' | 'foreshadowing' | 'style' | 'genre'
+
+const subgenreLabels: Record<FictionSubgenre, string> = {
+  general: '일반 소설',
+  fantasy: '판타지',
+  'martial-arts': '무협',
+  'romance-fantasy': '로맨스 판타지',
+  hunter: '헌터/현대 판타지',
+  romance: '현대 로맨스',
+  mystery: '미스터리',
+}
 
 export default function FictionBibleEditor({ bible, onChange }: FictionBibleEditorProps) {
   const [activeTab, setActiveTab] = useState<TabType>('characters')
+  const hasGenreSettings = bible.subgenre && bible.subgenre !== 'general'
+
+  const getGenreSettingsCount = (): number => {
+    switch (bible.subgenre) {
+      case 'fantasy':
+        return (bible.fantasySettings?.magicSystems.length || 0) +
+               (bible.fantasySettings?.races.length || 0) +
+               (bible.fantasySettings?.skills.length || 0)
+      case 'martial-arts':
+        return (bible.martialArtsSettings?.techniques.length || 0) +
+               (bible.martialArtsSettings?.factions.length || 0)
+      case 'romance-fantasy':
+        return (bible.romanceFantasySettings?.nobleFamilies.length || 0) +
+               (bible.romanceFantasySettings?.relationships.length || 0)
+      case 'hunter':
+        return (bible.hunterSettings?.hunterRanks.length || 0) +
+               (bible.hunterSettings?.gates.length || 0) +
+               (bible.hunterSettings?.skills.length || 0)
+      default:
+        return 0
+    }
+  }
 
   const tabs: { id: TabType; label: string; count?: number }[] = [
     { id: 'characters', label: '캐릭터', count: bible.characters.length },
     { id: 'world', label: '세계관', count: bible.worldSettings.length },
+    ...(hasGenreSettings ? [{ id: 'genre' as TabType, label: subgenreLabels[bible.subgenre] || '장르', count: getGenreSettingsCount() }] : []),
     { id: 'plot', label: '플롯', count: bible.plotThreads.length },
     { id: 'foreshadowing', label: '복선', count: bible.foreshadowing.length },
     { id: 'style', label: '문체' },
   ]
 
+  const handleSubgenreChange = (newSubgenre: FictionSubgenre) => {
+    const updated: FictionBible = { ...bible, subgenre: newSubgenre }
+
+    // 장르별 기본 설정 초기화
+    if (newSubgenre === 'fantasy' && !bible.fantasySettings) {
+      updated.fantasySettings = { magicSystems: [], races: [], skills: [], powerLevels: [] }
+    } else if (newSubgenre === 'martial-arts' && !bible.martialArtsSettings) {
+      updated.martialArtsSettings = { internalEnergies: [], techniques: [], factions: [] }
+    } else if (newSubgenre === 'romance-fantasy' && !bible.romanceFantasySettings) {
+      updated.romanceFantasySettings = { nobleFamilies: [], relationships: [] }
+    } else if (newSubgenre === 'hunter' && !bible.hunterSettings) {
+      updated.hunterSettings = { hunterRanks: [], gates: [], skills: [], guilds: [] }
+    }
+
+    onChange(updated)
+  }
+
   return (
     <div>
+      {/* 장르 선택 */}
+      <div className="flex items-center gap-4 mb-4 pb-4 border-b border-neutral-200 dark:border-neutral-700">
+        <label className="text-sm text-neutral-500 dark:text-neutral-400">소설 장르:</label>
+        <select
+          value={bible.subgenre || 'general'}
+          onChange={(e) => handleSubgenreChange(e.target.value as FictionSubgenre)}
+          className="px-3 py-1.5 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white rounded"
+        >
+          {Object.entries(subgenreLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+        {hasGenreSettings && (
+          <span className="text-xs text-emerald-600 dark:text-emerald-400">
+            장르별 설정 활성화됨
+          </span>
+        )}
+      </div>
+
       {/* 탭 네비게이션 */}
-      <div className="flex border-b border-neutral-200 dark:border-neutral-700 mb-6">
+      <div className="flex border-b border-neutral-200 dark:border-neutral-700 mb-6 overflow-x-auto">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -91,6 +171,54 @@ export default function FictionBibleEditor({ bible, onChange }: FictionBibleEdit
           characters={bible.characters}
           onChange={(styleGuide) => onChange({ ...bible, styleGuide })}
         />
+      )}
+
+      {activeTab === 'genre' && bible.subgenre === 'fantasy' && bible.fantasySettings && (
+        <div>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+            판타지 세계의 마법 체계, 종족, 스킬, 파워 레벨을 설정합니다.
+          </p>
+          <FantasySettingsEditor
+            settings={bible.fantasySettings}
+            onChange={(fantasySettings: FantasySettings) => onChange({ ...bible, fantasySettings })}
+          />
+        </div>
+      )}
+
+      {activeTab === 'genre' && bible.subgenre === 'martial-arts' && bible.martialArtsSettings && (
+        <div>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+            무협 세계의 내공, 무공, 문파/세가를 설정합니다.
+          </p>
+          <MartialArtsSettingsEditor
+            settings={bible.martialArtsSettings}
+            onChange={(martialArtsSettings: MartialArtsSettings) => onChange({ ...bible, martialArtsSettings })}
+          />
+        </div>
+      )}
+
+      {activeTab === 'genre' && bible.subgenre === 'romance-fantasy' && bible.romanceFantasySettings && (
+        <div>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+            귀족 가문, 관계도, 원작 정보(빙의물)를 설정합니다.
+          </p>
+          <RomanceFantasySettingsEditor
+            settings={bible.romanceFantasySettings}
+            onChange={(romanceFantasySettings: RomanceFantasySettings) => onChange({ ...bible, romanceFantasySettings })}
+          />
+        </div>
+      )}
+
+      {activeTab === 'genre' && bible.subgenre === 'hunter' && bible.hunterSettings && (
+        <div>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+            헌터 등급, 게이트/던전, 스킬, 길드를 설정합니다.
+          </p>
+          <HunterSettingsEditor
+            settings={bible.hunterSettings}
+            onChange={(hunterSettings: HunterSettings) => onChange({ ...bible, hunterSettings })}
+          />
+        </div>
       )}
     </div>
   )
