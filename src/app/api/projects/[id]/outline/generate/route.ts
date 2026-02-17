@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
@@ -149,6 +150,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
     const parseResult = GenerateOutlineSchema.safeParse(body)

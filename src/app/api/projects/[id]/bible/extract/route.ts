@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
@@ -137,6 +138,9 @@ const SELFHELP_EXTRACT_PROMPT = `당신은 자기계발서 분석 전문가입�
 // POST /api/projects/[id]/bible/extract - 챕터에서 Bible 항목 추출
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
 

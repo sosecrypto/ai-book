@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { runWriterAgent } from '@/agents/writer'
 import { BookOutline, ChapterOutline, BookType } from '@/types/book'
 
@@ -7,6 +8,9 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const body = await request.json()
     const { phase, bookType, outline, chapter } = body as {
       phase: string

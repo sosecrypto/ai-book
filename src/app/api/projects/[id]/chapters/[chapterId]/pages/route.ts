@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { splitChapterToPages, countWords, getPageStatus } from '@/lib/page-utils'
@@ -21,6 +22,9 @@ const UpdatePagesSchema = z.object({
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id, chapterId } = await params
 
     const chapter = await prisma.chapter.findFirst({
@@ -52,6 +56,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id, chapterId } = await params
     const body = await request.json()
 
@@ -94,6 +101,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id, chapterId } = await params
     const body = await request.json()
 

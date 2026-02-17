@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 import { generateEPUB } from '@/lib/epub'
 import { BookProject, Chapter, BookMetadata, Author, BookCategory } from '@/types/book'
@@ -9,6 +10,9 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const body = await request.json()
 
@@ -123,6 +127,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // GET: EPUB 정보 조회
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
 
     const project = await prisma.project.findUnique({

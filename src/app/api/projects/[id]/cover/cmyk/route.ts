@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 import {
   prepareForPrint,
@@ -13,6 +14,9 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const body = await request.json()
 
@@ -96,6 +100,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // GET: 표지 품질 검사
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
 
     const project = await prisma.project.findUnique({

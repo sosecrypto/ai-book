@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 import { BookMetadata, Author, BookCategory } from '@/types/book'
 
@@ -9,6 +10,9 @@ interface RouteParams {
 // GET: 메타데이터 조회
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
 
     const metadata = await prisma.bookMetadata.findUnique({
@@ -58,6 +62,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // POST: 메타데이터 생성/수정 (upsert)
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const body = await request.json()
 
@@ -144,6 +151,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // DELETE: 메타데이터 삭제
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
 
     await prisma.bookMetadata.delete({

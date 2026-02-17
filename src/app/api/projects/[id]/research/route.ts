@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 
 export async function GET(
@@ -6,6 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
 
     const researchData = await prisma.researchData.findUnique({
@@ -41,6 +45,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
     const { initialIdea, userAnswers, findings } = body

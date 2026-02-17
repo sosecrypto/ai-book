@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 import { validateAndParseISBN, formatISBN, convertISBN13to10 } from '@/lib/isbn'
 import { ISBNData } from '@/types/book'
@@ -10,6 +11,9 @@ interface RouteParams {
 // GET: ISBN 조회
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
 
     const isbn = await prisma.iSBN.findUnique({
@@ -56,6 +60,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // POST: ISBN 저장
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const body = await request.json()
     const { isbn: inputISBN, barcodeUrl } = body
@@ -136,6 +143,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // DELETE: ISBN 삭제
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
 
     await prisma.iSBN.delete({

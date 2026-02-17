@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import type { BookBible } from '@/types/book-bible'
@@ -17,6 +18,9 @@ interface RouteParams {
 // GET /api/projects/[id]/bible - Bible 조회
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const project = await prisma.project.findUnique({
       where: { id },
@@ -57,6 +61,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PUT /api/projects/[id]/bible - Bible 저장
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
 

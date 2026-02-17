@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 
 const VALID_SOURCE_TYPES = ['book', 'article', 'website', 'other'] as const
@@ -9,6 +10,9 @@ export async function GET(
   _request: NextRequest,
   { params }: RouteParams
 ) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   const { id: projectId } = await params
 
   const project = await prisma.project.findUnique({
@@ -31,6 +35,9 @@ export async function POST(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   const { id: projectId } = await params
 
   const project = await prisma.project.findUnique({
@@ -70,6 +77,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   const { id: projectId } = await params
   const body = await request.json()
   const { sourceId, title, author, url, type, notes } = body
@@ -109,6 +119,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   const { id: projectId } = await params
   const { searchParams } = new URL(request.url)
   const sourceId = searchParams.get('sourceId')

@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgentWithHistory, type MessageParam } from '@/lib/claude'
@@ -21,6 +22,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId, chapterId } = await params
     const body = await request.json()
 
@@ -160,6 +164,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId, chapterId } = await params
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '50')
@@ -188,6 +195,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId, chapterId } = await params
 
     await prisma.chatMessage.deleteMany({

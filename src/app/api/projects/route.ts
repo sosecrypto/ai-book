@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { projectRepository } from '@/lib/db/project-repository'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import type { UploadFileType } from '@/types/book'
 
 interface SourceFileData {
@@ -19,7 +20,10 @@ interface ChapterData {
 // GET /api/projects - 프로젝트 목록 조회
 export async function GET() {
   try {
-    const projects = await projectRepository.findAll()
+    const { userId, error } = await requireAuth()
+    if (error) return error
+
+    const projects = await projectRepository.findAll(userId!)
     return NextResponse.json({ success: true, data: projects })
   } catch (error) {
     return NextResponse.json(
@@ -32,6 +36,9 @@ export async function GET() {
 // POST /api/projects - 새 프로젝트 생성
 export async function POST(request: NextRequest) {
   try {
+    const { userId, error } = await requireAuth()
+    if (error) return error
+
     const body = await request.json()
     const { title, type, description, sourceFile, chapters } = body as {
       title: string
@@ -54,7 +61,7 @@ export async function POST(request: NextRequest) {
       description,
       sourceFile,
       chapters
-    })
+    }, userId!)
 
     return NextResponse.json({ success: true, data: project }, { status: 201 })
   } catch (error) {

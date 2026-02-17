@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 import { z } from 'zod'
 
@@ -19,6 +20,9 @@ const updateMemoSchema = z.object({
 // GET /api/projects/[id]/memos - 프로젝트의 모든 메모 조회
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const { searchParams } = new URL(request.url)
     const chapterNumber = searchParams.get('chapterNumber')
@@ -50,6 +54,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // POST /api/projects/[id]/memos - 새 메모 생성
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const body = await request.json()
 
@@ -82,6 +89,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // PATCH /api/projects/[id]/memos - 메모 수정 (memoId는 body에서)
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const body = await request.json()
     const { memoId, ...updateData } = body
@@ -130,6 +140,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/projects/[id]/memos - 메모 삭제 (memoId는 query param에서)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id: projectId } = await params
     const { searchParams } = new URL(request.url)
     const memoId = searchParams.get('memoId')

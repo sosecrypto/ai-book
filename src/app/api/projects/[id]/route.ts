@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { projectRepository } from '@/lib/db/project-repository'
+import { requireAuth, checkProjectOwnership } from '@/lib/auth/auth-utils'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -8,6 +9,9 @@ interface RouteParams {
 // GET /api/projects/[id] - 단일 프로젝트 조회
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { userId, error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const project = await projectRepository.findById(id)
 
@@ -17,6 +21,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         { status: 404 }
       )
     }
+
+    const ownerError = checkProjectOwnership(project.userId, userId!)
+    if (ownerError) return ownerError
 
     return NextResponse.json({ success: true, data: project })
   } catch (error) {
@@ -30,6 +37,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PUT /api/projects/[id] - 프로젝트 수정
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const { userId, error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
 
@@ -40,6 +50,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         { status: 404 }
       )
     }
+
+    const ownerError = checkProjectOwnership(existing.userId, userId!)
+    if (ownerError) return ownerError
 
     const project = await projectRepository.update(id, body)
     return NextResponse.json({ success: true, data: project })
@@ -54,6 +67,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/projects/[id] - 프로젝트 삭제
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { userId, error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
 
     const existing = await projectRepository.findById(id)
@@ -63,6 +79,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         { status: 404 }
       )
     }
+
+    const ownerError = checkProjectOwnership(existing.userId, userId!)
+    if (ownerError) return ownerError
 
     await projectRepository.delete(id)
     return NextResponse.json({ success: true, message: '프로젝트가 삭제되었습니다.' })

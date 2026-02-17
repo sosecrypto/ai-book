@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { projectRepository } from '@/lib/db/project-repository'
 
-// TODO: 인증 미들웨어 추가 필요 (Task #2)
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -18,6 +18,9 @@ const SaveChapterSchema = z.object({
 // POST /api/projects/[id]/chapters - 챕터 저장
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
 
@@ -52,6 +55,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/projects/[id]/chapters - 챕터 삭제
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const { searchParams } = new URL(request.url)
     const chapterNumberParam = searchParams.get('number')

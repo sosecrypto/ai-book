@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { runResearchAgent } from '@/agents/research'
 import { runOutlinerAgent, refineOutline, generateTableOfContents } from '@/agents/outliner'
 import { runWriterAgent } from '@/agents/writer'
@@ -9,6 +10,9 @@ import { BookType, OutlineFeedback, BookOutline } from '@/types/book'
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const body = await request.json()
     const { phase } = body
 

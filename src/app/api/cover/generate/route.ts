@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import OpenAI from 'openai'
 import { prisma } from '@/lib/db/client'
 import { generateCoverPrompt } from '@/lib/cover-generator'
@@ -7,6 +8,9 @@ import type { BookType } from '@/types/book'
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const body = await request.json()
     const { projectId, title, type, description, customPrompt } = body as {
       projectId: string

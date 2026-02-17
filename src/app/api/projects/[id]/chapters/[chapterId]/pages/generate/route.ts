@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
 import { buildBibleContext, parseBibleJson } from '@/lib/bible-context'
 
-// TODO: 인증 미들웨어 추가 필요 (Task #2)
 
 type RouteParams = { params: Promise<{ id: string; chapterId: string }> }
 
@@ -250,6 +250,9 @@ function sanitizeForPrompt(text: string): string {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id, chapterId } = await params
     const body = await request.json()
 

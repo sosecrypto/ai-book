@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
@@ -184,6 +185,9 @@ const SELFHELP_VALIDATE_PROMPT = `당신은 자기계발서 편집자입니다. 
 // POST /api/projects/[id]/bible/validate - 내용과 Bible 일관성 검증
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
 

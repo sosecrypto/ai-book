@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/auth-utils'
 import { parseBuffer, FileParseError } from '@/lib/file-parser'
 
 const ALLOWED_EXTENSIONS = ['txt', 'docx', 'pdf'] as const
@@ -19,6 +20,9 @@ function sanitizeFileName(fileName: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const formData = await request.formData()
     const file = formData.get('file') as File | null
 

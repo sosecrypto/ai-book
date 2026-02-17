@@ -108,8 +108,11 @@ function toBookProject(dbProject: {
 }
 
 export const projectRepository = {
-  async findAll(): Promise<BookProject[]> {
+  async findAll(userId?: string): Promise<BookProject[]> {
     const projects = await prisma.project.findMany({
+      where: userId
+        ? { OR: [{ userId }, { userId: null }] }
+        : undefined,
       include: { chapters: true },
       orderBy: { updatedAt: 'desc' },
     })
@@ -124,7 +127,7 @@ export const projectRepository = {
     return project ? toBookProject(project) : null
   },
 
-  async create(data: CreateProjectDto): Promise<BookProject> {
+  async create(data: CreateProjectDto, userId?: string): Promise<BookProject> {
     const project = await prisma.project.create({
       data: {
         title: data.title,
@@ -132,6 +135,7 @@ export const projectRepository = {
         description: data.description,
         status: 'draft',
         stage: 'research',
+        ...(userId && { userId }),
       },
       include: { chapters: true },
     })
@@ -199,7 +203,7 @@ export const projectRepository = {
     })
   },
 
-  async createWithFile(data: CreateProjectWithFileDto): Promise<BookProject> {
+  async createWithFile(data: CreateProjectWithFileDto, userId?: string): Promise<BookProject> {
     const { sourceFile, chapters, ...projectData } = data
 
     const hasChapters = chapters && chapters.length > 0
@@ -230,6 +234,7 @@ export const projectRepository = {
         status: 'draft',
         stage: hasChapters ? 'write' : 'research',
         outline: outline ? JSON.stringify(outline) : null,
+        ...(userId && { userId }),
         ...(sourceFile && {
           sourceFile: {
             create: {

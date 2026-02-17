@@ -50,6 +50,14 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 - **ISBN 관리** — ISBN-10/13 검증 및 바코드 생성
 - **메타데이터** — 저자, 출판사, 저작권 정보 관리
 
+### 사용자 인증
+- **NextAuth.js v5** 기반 인증 시스템 (JWT 세션)
+- 이메일/비밀번호 로그인 (bcryptjs 해싱)
+- Google OAuth 지원 (선택)
+- 모든 API 라우트 인증 보호 (28개 라우트)
+- 프로젝트 소유권 검증 (데이터 격리)
+- 미들웨어 기반 라우트 보호
+
 ### 기타
 - 3D 인터랙티브 랜딩 페이지 (Three.js + React Three Fiber)
 - Toast 알림 시스템
@@ -70,6 +78,7 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 | **Export** | @react-pdf/renderer (PDF), epub-gen-memory (EPUB) |
 | **Validation** | Zod |
 | **File Parsing** | mammoth (docx), pdf-parse (pdf), sharp (image) |
+| **Auth** | NextAuth.js v5 (JWT), bcryptjs, @auth/prisma-adapter |
 | **Testing** | Vitest, Testing Library |
 
 ## 책 종류
@@ -84,17 +93,20 @@ ai-book/
 │   ├── agents/              # AI 에이전트 (research, outliner, writer, editor, critic)
 │   ├── app/
 │   │   ├── api/
+│   │   │   ├── auth/        # 인증 (NextAuth, 회원가입)
 │   │   │   ├── cover/       # 표지 생성 API
 │   │   │   ├── generate/    # AI 생성 API
 │   │   │   ├── projects/    # 프로젝트 CRUD, outline, write, edit, review
 │   │   │   ├── stream/      # 스트리밍 API
 │   │   │   └── upload/      # 파일 업로드 API
+│   │   ├── auth/            # 로그인/회원가입/에러 페이지
 │   │   ├── new/             # 새 프로젝트 생성
 │   │   ├── project/[id]/    # 5단계 워크플로우 (research → outline → write → edit → review)
 │   │   ├── projects/        # 프로젝트 목록
 │   │   ├── preview/[id]/    # 북 프리뷰
 │   │   └── write/           # 집필 페이지
 │   ├── components/
+│   │   ├── auth/            # 인증 컴포넌트 (LoginForm, RegisterForm, UserMenu)
 │   │   ├── ai-chat/         # 챕터별 AI 채팅
 │   │   ├── bible/           # Book Bible 컨텍스트 빌더
 │   │   ├── cover/           # 표지 디자인 (*)
@@ -119,6 +131,7 @@ ai-book/
 │   │   ├── cover-templates.ts # 표지 템플릿
 │   │   ├── epub.ts          # EPUB 생성
 │   │   ├── epub-styles.ts   # EPUB 스타일
+│   │   ├── auth/            # 인증 유틸 (password, auth-utils)
 │   │   ├── errors.ts        # 에러 처리 유틸
 │   │   ├── file-parser.ts   # 파일 파싱 (docx, pdf, txt)
 │   │   ├── isbn.ts          # ISBN 유틸리티
@@ -165,6 +178,10 @@ npm run test:coverage # 커버리지 리포트
 ```env
 ANTHROPIC_API_KEY=    # Claude API 키 (필수)
 DATABASE_URL=file:./prisma/dev.db
+AUTH_SECRET=          # NextAuth 시크릿 (openssl rand -base64 32)
+AUTH_TRUST_HOST=true  # 로컬 개발용
+# AUTH_GOOGLE_ID=     # Google OAuth (선택)
+# AUTH_GOOGLE_SECRET= # Google OAuth (선택)
 ```
 
 ## 개발 현황
