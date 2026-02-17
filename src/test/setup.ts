@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom'
+import React from 'react'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
@@ -23,6 +24,31 @@ vi.mock('next/navigation', () => ({
   }),
   usePathname: () => '/project/test-project-id/write',
   useSearchParams: () => new URLSearchParams(),
+}))
+
+// NextAuth 모킹
+vi.mock('next-auth/react', () => ({
+  useSession: vi.fn(() => ({
+    data: {
+      user: { id: 'test-user-id', email: 'test@test.com', name: 'Test User' },
+      expires: new Date(Date.now() + 86400000).toISOString(),
+    },
+    status: 'authenticated',
+  })),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+}))
+
+// NextAuth 서버사이드 모킹 (API 라우트 테스트용)
+vi.mock('@/auth', () => ({
+  auth: vi.fn().mockResolvedValue({
+    user: { id: 'test-user-id', email: 'test@test.com', name: 'Test User' },
+    expires: new Date(Date.now() + 86400000).toISOString(),
+  }),
+  handlers: { GET: vi.fn(), POST: vi.fn() },
+  signIn: vi.fn(),
+  signOut: vi.fn(),
 }))
 
 // Fetch 모킹
