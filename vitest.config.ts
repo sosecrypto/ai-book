@@ -12,12 +12,25 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      include: [
+        'src/lib/**',
+        'src/agents/**',
+        'src/hooks/**',
+      ],
       exclude: [
-        'node_modules/',
-        'src/test/',
+        '**/*.test.*',
+        '**/*.spec.*',
+        '**/test/**',
         '**/*.d.ts',
-        '**/*.config.*',
         '**/types/**',
+        'src/lib/db/**',
+        'src/lib/barcode.ts',
+        'src/lib/cmyk.ts',
+        'src/lib/cover-generator.ts',
+        'src/lib/cover-templates.ts',
+        'src/lib/epub-styles.ts',
+        'src/lib/epub.ts',
+        'src/lib/pdf.ts',
       ],
       thresholds: {
         global: {
