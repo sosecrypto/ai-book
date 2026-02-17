@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/ToastProvider'
+import Providers from '@/app/providers'
 import DevTools from '@/components/DevTools'
 import './globals.css'
 
@@ -51,7 +52,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <Providers>
+          <ToastProvider>{children}</ToastProvider>
+        </Providers>
         <DevTools />
       </body>
     </html>
