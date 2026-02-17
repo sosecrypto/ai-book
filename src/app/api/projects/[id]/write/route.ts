@@ -295,6 +295,7 @@ export async function POST(
         type: true,
         targetAudience: true,
         tone: true,
+        customTone: true,
         bible: true,
       }
     })
@@ -332,10 +333,15 @@ ${sanitizeForPrompt(existingContent.replace(/<[^>]*>/g, ' ').substring(0, 3000))
       ? '위 정보를 바탕으로 기존 내용에 이어서 자연스럽게 계속 작성해주세요. 기존 내용을 다시 쓰지 말고 새로운 부분만 작성하세요.'
       : '위 정보를 바탕으로 이 챕터의 본문을 작성해주세요.'
 
+    // 문체 설명 생성
+    const toneDescription = project.tone === 'custom' && project.customTone
+      ? `사용자 지정 문체: ${sanitizeForPrompt(project.customTone)}`
+      : sanitizeForPrompt(project.tone || '친근체')
+
     const prompt = `**책 제목**: ${sanitizeForPrompt(project.title)}
 **책 유형**: ${project.type}
 **타겟 독자**: ${sanitizeForPrompt(project.targetAudience || '일반 독자')}
-**문체**: ${sanitizeForPrompt(project.tone || '친근체')}
+**문체**: ${toneDescription}
 ${bibleContext}
 ${previousContext}
 

@@ -142,7 +142,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { targetAudience, targetLength, tone } = await request.json()
+    const { targetAudience, targetLength, tone, customTone } = await request.json()
 
     const project = await prisma.project.findUnique({
       where: { id },
@@ -177,13 +177,26 @@ ${findings}
 
     // 문체 가이드
     const toneGuides: Record<string, string> = {
-      'formal': '격식체 - 정중하고 권위 있는 어조로 독자를 존중하며 전문성을 드러내는 방식',
-      'casual': '친근체 - 친구에게 이야기하듯 편안하고 따뜻한 어조로 공감대를 형성하는 방식',
-      'academic': '학술체 - 논리적이고 객관적인 어조로 근거를 바탕으로 설득하는 방식',
-      'narrative': '서술체 - 이야기를 들려주듯 몰입감 있게 전개하는 방식',
-      'motivational': '동기부여체 - 독자를 격려하고 행동하게 만드는 에너지 있는 방식'
+      'formal': '격식체 - 정중하고 권위 있는 어조로 독자를 존중하며 전문성을 드러내는 방식. "~하십시오", "~입니다"와 같은 높임말을 사용하고, 문장 구조가 정돈되어 있으며 공식적인 느낌을 줍니다.',
+      'casual': '친근체 - 친구에게 이야기하듯 편안하고 따뜻한 어조로 공감대를 형성하는 방식. "~해요", "~죠?"와 같은 부드러운 종결어미를 사용하고, 독자에게 말을 거는 듯한 느낌을 줍니다.',
+      'academic': '학술체 - 논리적이고 객관적인 어조로 근거를 바탕으로 설득하는 방식. 인용, 데이터, 논증 구조를 활용하며 "첫째, 둘째"와 같은 체계적 서술을 사용합니다.',
+      'narrative': '서술체 - 이야기를 들려주듯 몰입감 있게 전개하는 방식. 구체적인 장면 묘사, 감정 표현, 시간 순서에 따른 전개를 사용하여 독자를 이야기 속으로 끌어들입니다.',
+      'motivational': '동기부여체 - 독자를 격려하고 행동하게 만드는 에너지 있는 방식. "당신은 할 수 있습니다!", "지금 바로 시작하세요"와 같은 적극적인 표현과 감탄문을 활용합니다.',
+      'poetic': '문학체 - 아름답고 시적인 표현의 문체. 은유, 비유, 상징을 풍부하게 사용하고, 문장의 리듬과 여운을 중시합니다. 독자의 감성을 자극하는 서정적 표현을 사용합니다.',
+      'humorous': '유머체 - 재치있고 유쾌한 문체. 자기 비하, 과장, 반전 등의 유머 기법을 사용하고, 독자가 웃으면서 읽을 수 있도록 가볍고 위트 있게 서술합니다.',
+      'concise': '간결체 - 핵심만 담백하게 전달하는 문체. 불필요한 수식어를 제거하고, 짧은 문장으로 명확하게 메시지를 전달합니다. 군더더기 없이 핵심만 압축합니다.',
+      'conversational': '대화체 - 독자와 대화하듯 질문하고 답하는 문체. "혹시 이런 경험 있으신가요?", "왜 그럴까요?"와 같은 질문을 던지고 함께 답을 찾아가는 방식으로 서술합니다.',
+      'professional': '전문가체 - 업계 전문가가 조언하는 듯한 문체. 실무 경험과 사례를 바탕으로 신뢰감 있게 조언하며, "현장에서는", "실제로"와 같은 표현으로 전문성을 드러냅니다.',
+      'warm': '따뜻한체 - 공감하고 위로하는 따스한 문체. "힘드셨죠", "괜찮아요"와 같은 공감 표현을 사용하고, 독자의 감정을 인정하며 부드럽게 격려합니다.'
     }
-    const toneGuide = toneGuides[tone as string] || '일반적인 문체'
+
+    // 커스텀 문체 또는 프리셋 문체 선택
+    let toneGuide: string
+    if (tone === 'custom' && customTone) {
+      toneGuide = `사용자 지정 문체 - ${customTone}`
+    } else {
+      toneGuide = toneGuides[tone as string] || '일반적인 문체'
+    }
 
     const systemPrompt = `${OUTLINE_GENERATION_PROMPT}
 
@@ -257,9 +270,7 @@ ${researchContext}
       if (!outline.chapters || !Array.isArray(outline.chapters) || outline.chapters.length === 0) {
         throw new Error('Invalid outline structure: missing chapters')
       }
-    } catch (parseError) {
-      console.error('Failed to parse outline:', parseError)
-      console.error('Raw response (first 500 chars):', response.substring(0, 500))
+    } catch {
       // 기본 목차 제공
       const chapterCount = Math.max(5, Math.floor(targetLength / 25))
       outline = {
@@ -285,6 +296,7 @@ ${researchContext}
         targetAudience,
         targetLength,
         tone,
+        customTone: tone === 'custom' ? customTone : null,
         status: 'outlining'
       }
     })

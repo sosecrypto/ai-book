@@ -15,9 +15,25 @@ interface OutlineState {
     targetAudience: string
     targetLength: number
     tone: string
+    customTone?: string
   }
   outline: BookOutline | null
   isLoading: boolean
+}
+
+const TONE_LABELS: Record<string, string> = {
+  'formal': '격식체',
+  'casual': '친근체',
+  'academic': '학술체',
+  'narrative': '서술체',
+  'motivational': '동기부여체',
+  'poetic': '문학체',
+  'humorous': '유머체',
+  'concise': '간결체',
+  'conversational': '대화체',
+  'professional': '전문가체',
+  'warm': '따뜻한체',
+  'custom': '직접 입력'
 }
 
 export default function OutlinePage() {
@@ -61,7 +77,8 @@ export default function OutlinePage() {
             settings: {
               targetAudience: project.targetAudience || '',
               targetLength: project.targetLength || 200,
-              tone: project.tone || 'casual'
+              tone: project.tone || 'casual',
+              customTone: project.customTone || ''
             }
           }))
         } else if (project.targetAudience) {
@@ -70,7 +87,8 @@ export default function OutlinePage() {
             settings: {
               targetAudience: project.targetAudience,
               targetLength: project.targetLength || 200,
-              tone: project.tone || 'casual'
+              tone: project.tone || 'casual',
+              customTone: project.customTone || ''
             }
           }))
         }
@@ -91,7 +109,8 @@ export default function OutlinePage() {
         body: JSON.stringify({
           targetAudience: state.settings.targetAudience,
           targetLength: state.settings.targetLength,
-          tone: state.settings.tone
+          tone: state.settings.tone,
+          customTone: state.settings.tone === 'custom' ? state.settings.customTone : null
         })
       })
 
@@ -382,12 +401,13 @@ export default function OutlinePage() {
                         문체
                       </p>
                       <p className="text-neutral-900 dark:text-white">
-                        {state.settings.tone === 'formal' ? '격식체' :
-                         state.settings.tone === 'casual' ? '친근체' :
-                         state.settings.tone === 'academic' ? '학술체' :
-                         state.settings.tone === 'narrative' ? '서술체' :
-                         state.settings.tone === 'motivational' ? '동기부여체' : state.settings.tone}
+                        {TONE_LABELS[state.settings.tone] || state.settings.tone}
                       </p>
+                      {state.settings.tone === 'custom' && state.settings.customTone && (
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 italic">
+                          &quot;{state.settings.customTone}&quot;
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

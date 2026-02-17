@@ -31,6 +31,7 @@ model Project {
   targetAudience String?
   targetLength   Int?          // 목표 페이지 수
   tone           String?       // 문체/어투
+  customTone     String?       // 사용자 지정 문체 설명
   confirmedAt    DateTime?     // 목차 확정 시간
   userId         String?
   user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
