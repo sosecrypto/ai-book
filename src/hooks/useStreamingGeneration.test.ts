@@ -119,4 +119,169 @@ describe('useStreamingGeneration', () => {
     expect(content).toBe('Hello World')
     expect(result.current.isStreaming).toBe(false)
   })
+
+  it('event: 라인을 건너뛰고 data: 라인만 처리한다', async () => {
+    const encoder = new TextEncoder()
+    const chunks = [
+      encoder.encode('event: message\ndata: {"text":"Hello"}\n\n'),
+    ]
+
+    let chunkIndex = 0
+    const mockReader = {
+      read: vi.fn().mockImplementation(() => {
+        if (chunkIndex < chunks.length) {
+          return Promise.resolve({ done: false, value: chunks[chunkIndex++] })
+        }
+        return Promise.resolve({ done: true, value: undefined })
+      }),
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      body: { getReader: () => mockReader },
+    })
+
+    const { result } = renderHook(() => useStreamingGeneration())
+
+    let content = ''
+    await act(async () => {
+      content = await result.current.startStreaming(
+        'fiction',
+        createMockOutline(1),
+        createMockChapterOutline(1)
+      )
+    })
+
+    expect(content).toBe('Hello')
+  })
+
+  it('data.content가 fullContent를 교체한다', async () => {
+    const encoder = new TextEncoder()
+    const chunks = [
+      encoder.encode('data: {"text":"partial"}\ndata: {"content":"full replacement"}\n\n'),
+    ]
+
+    let chunkIndex = 0
+    const mockReader = {
+      read: vi.fn().mockImplementation(() => {
+        if (chunkIndex < chunks.length) {
+          return Promise.resolve({ done: false, value: chunks[chunkIndex++] })
+        }
+        return Promise.resolve({ done: true, value: undefined })
+      }),
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      body: { getReader: () => mockReader },
+    })
+
+    const { result } = renderHook(() => useStreamingGeneration())
+
+    let content = ''
+    await act(async () => {
+      content = await result.current.startStreaming(
+        'fiction',
+        createMockOutline(1),
+        createMockChapterOutline(1)
+      )
+    })
+
+    expect(content).toBe('full replacement')
+  })
+
+  it('data.error가 내부 catch에 잡혀 스트림이 계속된다', async () => {
+    const encoder = new TextEncoder()
+    const chunks = [
+      encoder.encode('data: {"error":"서버 오류"}\ndata: {"text":"after error"}\n\n'),
+    ]
+
+    let chunkIndex = 0
+    const mockReader = {
+      read: vi.fn().mockImplementation(() => {
+        if (chunkIndex < chunks.length) {
+          return Promise.resolve({ done: false, value: chunks[chunkIndex++] })
+        }
+        return Promise.resolve({ done: true, value: undefined })
+      }),
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      body: { getReader: () => mockReader },
+    })
+
+    const { result } = renderHook(() => useStreamingGeneration())
+
+    let content = ''
+    await act(async () => {
+      content = await result.current.startStreaming(
+        'fiction',
+        createMockOutline(1),
+        createMockChapterOutline(1)
+      )
+    })
+
+    // data.error throws → caught by inner catch → stream continues
+    expect(content).toBe('after error')
+    expect(result.current.isStreaming).toBe(false)
+  })
+
+  it('malformed JSON을 무시하고 계속 처리한다', async () => {
+    const encoder = new TextEncoder()
+    const chunks = [
+      encoder.encode('data: {invalid json}\ndata: {"text":"valid"}\n\n'),
+    ]
+
+    let chunkIndex = 0
+    const mockReader = {
+      read: vi.fn().mockImplementation(() => {
+        if (chunkIndex < chunks.length) {
+          return Promise.resolve({ done: false, value: chunks[chunkIndex++] })
+        }
+        return Promise.resolve({ done: true, value: undefined })
+      }),
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      body: { getReader: () => mockReader },
+    })
+
+    const { result } = renderHook(() => useStreamingGeneration())
+
+    let content = ''
+    await act(async () => {
+      content = await result.current.startStreaming(
+        'fiction',
+        createMockOutline(1),
+        createMockChapterOutline(1)
+      )
+    })
+
+    expect(content).toBe('valid')
+    expect(result.current.error).toBeNull()
+  })
+
+  it('AbortError 시 isStreaming=false이고 에러 없이 종료한다', async () => {
+    const abortError = new Error('Aborted')
+    abortError.name = 'AbortError'
+
+    global.fetch = vi.fn().mockRejectedValue(abortError)
+
+    const { result } = renderHook(() => useStreamingGeneration())
+
+    let content = ''
+    await act(async () => {
+      content = await result.current.startStreaming(
+        'fiction',
+        createMockOutline(1),
+        createMockChapterOutline(1)
+      )
+    })
+
+    expect(content).toBe('')
+    expect(result.current.isStreaming).toBe(false)
+    expect(result.current.error).toBeNull()
+  })
 })

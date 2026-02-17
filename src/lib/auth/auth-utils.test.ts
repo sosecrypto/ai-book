@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getCurrentUserId, requireAuth, unauthorizedResponse, forbiddenResponse } from './auth-utils'
+import { getCurrentUserId, requireAuth, unauthorizedResponse, forbiddenResponse, checkProjectOwnership } from './auth-utils'
 
 vi.mock('@/auth', () => ({
   auth: vi.fn(),
@@ -77,6 +77,26 @@ describe('auth-utils', () => {
       expect(result.userId).toBeNull()
       expect(result.error).toBeDefined()
       expect(result.error!.status).toBe(401)
+    })
+  })
+
+  describe('checkProjectOwnership', () => {
+    it('레거시 프로젝트(userId=null)는 null을 반환한다', () => {
+      const result = checkProjectOwnership(null, 'user-123')
+      expect(result).toBeNull()
+    })
+
+    it('소유자가 일치하면 null을 반환한다', () => {
+      const result = checkProjectOwnership('user-123', 'user-123')
+      expect(result).toBeNull()
+    })
+
+    it('소유자가 불일치하면 403 응답을 반환한다', async () => {
+      const result = checkProjectOwnership('user-456', 'user-123')
+      expect(result).not.toBeNull()
+      expect(result!.status).toBe(403)
+      const body = await result!.json()
+      expect(body).toEqual({ success: false, error: '접근 권한이 없습니다.' })
     })
   })
 })
