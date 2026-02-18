@@ -5,7 +5,7 @@
 AI multi-agent book writing platform. Users input a topic and style, and 5 AI agents collaborate to produce a complete book.
 
 ### Tech Stack
-- **Framework**: Next.js 14 (App Router), React 18, TypeScript 5
+- **Framework**: Next.js 16 (App Router), React 19, TypeScript 5
 - **Styling**: Tailwind CSS 4, Tailwind Typography (dark mode required)
 - **Editor**: TipTap (rich text), InDesign-style page editor
 - **AI**: Anthropic Claude API (@anthropic-ai/sdk)
@@ -58,7 +58,7 @@ ai-book/
 [Critic]   → Quality evaluation (Pass/Revise) → export on pass
 ```
 
-## Commands
+## Commands (Allowed)
 
 ```bash
 npm run dev           # Dev server
@@ -66,6 +66,9 @@ npm run build         # Production build
 npm test              # Vitest watch mode
 npm run test:run      # Single test run
 npm run test:coverage # Coverage report
+npx prisma studio     # DB GUI
+npx prisma db push    # Push schema
+npx prisma generate   # Generate client
 ```
 
 ## Environment Variables
