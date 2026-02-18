@@ -201,7 +201,7 @@ AUTH_TRUST_HOST=true  # 로컬 개발용
 - [x] Toast 알림 시스템
 - [x] Zod 입력 검증 (API endpoints)
 - [x] 다크/라이트 모드 완전 지원
-- [ ] 카테고리 선택 UI (BISAC/KDC)
+- [x] 카테고리 선택 UI (BISAC/KDC/DDC/custom)
 - [x] 사용자 인증 (NextAuth.js v5, JWT, Google OAuth)
-- [x] 테스트 커버리지 80% 달성 (전체 91.3%)
-- [ ] 카테고리 선택 UI 미구현 파일 커버리지 개선 (useAIChat 44%, file-parser 46%)
+- [x] 테스트 커버리지 80% 달성 (전체 97.47% stmts / 84.62% branch)
+- [x] 커버리지 미달 파일 개선 완료 (useAIChat, file-parser, useStreamingGeneration, isbn 등)
