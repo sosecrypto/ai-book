@@ -212,6 +212,7 @@ export interface UserAnswer {
   questionId: string
   answer: string
   timestamp: Date
+  source?: 'user' | 'ai'
 }
 
 export interface ResearchDataType {

@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures/test-fixtures'
 import { goToProjectStage } from '../helpers/navigation'
-import { mockResearchQuestionsAPI, mockResearchPlanAPI } from '../fixtures/mock-ai'
+import { mockResearchQuestionsAPI, mockResearchPlanAPI, mockQuickStartAPI } from '../fixtures/mock-ai'
 import { expectHeading } from '../helpers/assertions'
 
 test.describe('Research Stage', () => {
@@ -74,6 +74,23 @@ test.describe('Research Stage', () => {
 
     // Should show complete state with saved data
     await expect(page.getByText('리서치 완료').first()).toBeVisible({ timeout: 15000 })
+  })
+
+  test('should complete research via Quick Start', async ({ page, projectId }) => {
+    await mockQuickStartAPI(page)
+    await goToProjectStage(page, projectId, 'research')
+
+    // Fill initial idea
+    await page.getByPlaceholder('책 아이디어, 주제 또는 컨셉을 설명해주세요').fill(
+      'AI가 자의식을 갖게 되는 미래 도시의 이야기'
+    )
+
+    // Click Quick Start button
+    await page.getByRole('button', { name: '빠른 시작' }).click()
+
+    // Should show research complete with AI badge
+    await expect(page.getByText('리서치 완료')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('AI 생성')).toBeVisible()
   })
 
   test('should proceed to next stage', async ({ page, projectId }) => {

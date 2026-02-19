@@ -8,12 +8,15 @@ import RichTextEditor from '@/components/RichTextEditor'
 import { AIQuestion, UserAnswer } from '@/types/book'
 
 interface ResearchState {
-  step: 'idea' | 'questions' | 'planning' | 'complete'
+  step: 'idea' | 'questions' | 'planning' | 'quick-planning' | 'complete'
   initialIdea: string
   aiQuestions: AIQuestion[]
   userAnswers: UserAnswer[]
   researchSummary: string | null
+  isQuickStart: boolean
 }
+
+type QuickStartProgress = 'generating-questions' | 'generating-answers' | 'generating-plan' | null
 
 // 기존 텍스트 데이터를 HTML로 변환 (호환성)
 const textToHtml = (text: string): string => {
@@ -40,7 +43,8 @@ export default function ResearchPage() {
     initialIdea: '',
     aiQuestions: [],
     userAnswers: [],
-    researchSummary: null
+    researchSummary: null,
+    isQuickStart: false
   })
   const [isLoading, setIsLoading] = useState(false)
   const [currentAnswer, setCurrentAnswer] = useState('')
@@ -50,7 +54,8 @@ export default function ResearchPage() {
   const [editedSummary, setEditedSummary] = useState('')
   const [editedAnswers, setEditedAnswers] = useState<UserAnswer[]>([])
   const [isSaving, setIsSaving] = useState(false)
-  const [viewingStep, setViewingStep] = useState<string | null>(null) // 미리보기 중인 단계
+  const [viewingStep, setViewingStep] = useState<string | null>(null)
+  const [quickStartProgress, setQuickStartProgress] = useState<QuickStartProgress>(null)
 
   useEffect(() => {
     loadExistingData()
@@ -63,14 +68,17 @@ export default function ResearchPage() {
         const data = await res.json()
         if (data.researchData) {
           const findings = data.researchData.findings
+          const answers: UserAnswer[] = data.researchData.userAnswers || []
+          const hasAiAnswers = answers.some((a: UserAnswer) => a.source === 'ai')
           setState({
             step: findings ? 'complete' : 'questions',
             initialIdea: data.researchData.initialIdea || '',
             aiQuestions: data.researchData.aiQuestions || [],
-            userAnswers: data.researchData.userAnswers || [],
-            researchSummary: findings ? textToHtml(findings) : null
+            userAnswers: answers,
+            researchSummary: findings ? textToHtml(findings) : null,
+            isQuickStart: hasAiAnswers
           })
-          setCurrentQuestionIndex(data.researchData.userAnswers?.length || 0)
+          setCurrentQuestionIndex(answers.length || 0)
         }
       }
     } catch {
@@ -107,13 +115,58 @@ export default function ResearchPage() {
     }
   }
 
+  const handleQuickStart = async () => {
+    if (!state.initialIdea.trim()) return
+
+    setIsLoading(true)
+    setError(null)
+    setState(prev => ({ ...prev, step: 'quick-planning' }))
+    setQuickStartProgress('generating-questions')
+
+    // 프로그레스 단계 시뮬레이션
+    const timer1 = setTimeout(() => setQuickStartProgress('generating-answers'), 5000)
+    const timer2 = setTimeout(() => setQuickStartProgress('generating-plan'), 12000)
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/research/quick-start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initialIdea: state.initialIdea })
+      })
+
+      const data = await res.json()
+      if (data.summary) {
+        setState(prev => ({
+          ...prev,
+          step: 'complete',
+          aiQuestions: data.questions || prev.aiQuestions,
+          userAnswers: data.answers || prev.userAnswers,
+          researchSummary: textToHtml(data.summary),
+          isQuickStart: true
+        }))
+      } else {
+        setError(t('quickStartFailed'))
+        setState(prev => ({ ...prev, step: 'idea' }))
+      }
+    } catch {
+      setError(t('quickStartFailed'))
+      setState(prev => ({ ...prev, step: 'idea' }))
+    } finally {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      setIsLoading(false)
+      setQuickStartProgress(null)
+    }
+  }
+
   const handleAnswerSubmit = async () => {
     if (!currentAnswer.trim()) return
 
     const answer: UserAnswer = {
       questionId: state.aiQuestions[currentQuestionIndex].id,
       answer: currentAnswer,
-      timestamp: new Date()
+      timestamp: new Date(),
+      source: 'user'
     }
 
     const newAnswers = [...state.userAnswers, answer]
@@ -224,19 +277,13 @@ export default function ResearchPage() {
   }
 
   const handleStepClick = (stepId: string, stepIndex: number) => {
-    // planning 단계는 로딩 중이므로 클릭 불가
-    if (stepId === 'planning') return
-    // 현재 단계는 미리보기 종료
+    if (stepId === 'planning' || stepId === 'quick-planning') return
     if (stepIndex === currentStepIndex) {
       setViewingStep(null)
       return
     }
-    // 이후 단계는 클릭 불가
     if (stepIndex > currentStepIndex) return
-    // 로딩 중에는 단계 변경 불가
     if (isLoading) return
-
-    // 이전 단계 미리보기 모드로 전환
     setViewingStep(stepId)
   }
 
@@ -247,20 +294,28 @@ export default function ResearchPage() {
   const handleRestartFromStep = (stepId: string) => {
     setViewingStep(null)
     if (stepId === 'idea') {
-      setState(prev => ({ ...prev, step: 'idea' }))
+      setState(prev => ({ ...prev, step: 'idea', isQuickStart: false }))
     } else if (stepId === 'questions') {
-      setState(prev => ({ ...prev, step: 'questions' }))
+      setState(prev => ({ ...prev, step: 'questions', isQuickStart: false }))
       setCurrentQuestionIndex(0)
       setCurrentAnswer('')
     }
   }
 
-  const steps = [
-    { id: 'idea', label: t('steps.idea'), num: 1 },
-    { id: 'questions', label: t('steps.explore'), num: 2 },
-    { id: 'planning', label: t('steps.plan'), num: 3 },
-    { id: 'complete', label: t('steps.complete'), num: 4 }
-  ]
+  // Quick Start 모드면 3단계, 아니면 4단계
+  const isQuickFlow = state.step === 'quick-planning' || state.isQuickStart
+  const steps = isQuickFlow
+    ? [
+        { id: 'idea', label: t('steps.idea'), num: 1 },
+        { id: 'quick-planning', label: t('steps.quickPlan'), num: 2 },
+        { id: 'complete', label: t('steps.complete'), num: 3 }
+      ]
+    : [
+        { id: 'idea', label: t('steps.idea'), num: 1 },
+        { id: 'questions', label: t('steps.explore'), num: 2 },
+        { id: 'planning', label: t('steps.plan'), num: 3 },
+        { id: 'complete', label: t('steps.complete'), num: 4 }
+      ]
   const currentStepIndex = steps.findIndex(s => s.id === state.step)
 
   return (
@@ -279,7 +334,7 @@ export default function ResearchPage() {
         <div className="mb-16">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => {
-              const isClickable = index < currentStepIndex && step.id !== 'planning' && !isLoading
+              const isClickable = index < currentStepIndex && step.id !== 'planning' && step.id !== 'quick-planning' && !isLoading
               return (
                 <div key={step.id} className="flex items-center flex-1">
                   <button
@@ -430,29 +485,62 @@ export default function ResearchPage() {
               />
             </div>
 
-            <button
-              onClick={handleIdeaSubmit}
-              disabled={!state.initialIdea.trim() || isLoading}
-              className={`
-                w-full py-5 text-sm font-medium tracking-widest uppercase transition-all duration-500 flex items-center justify-center gap-3
-                ${state.initialIdea.trim() && !isLoading
-                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
-                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
-                }
-              `}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            {/* 두 버튼 가로 배치 */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* 빠른 시작 (primary) */}
+              <div className="flex flex-col">
+                <button
+                  onClick={handleQuickStart}
+                  disabled={!state.initialIdea.trim() || isLoading}
+                  className={`
+                    py-5 text-sm font-medium tracking-widest uppercase transition-all duration-500 flex items-center justify-center gap-3
+                    ${state.initialIdea.trim() && !isLoading
+                      ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {/* 번개 아이콘 */}
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  {t('preparingQuestions')}
-                </>
-              ) : (
-                t('developIdea')
-              )}
-            </button>
+                  {t('quickStart')}
+                </button>
+                <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500 text-center">
+                  {t('quickStartDescription')}
+                </p>
+              </div>
+
+              {/* 아이디어 발전시키기 (secondary) */}
+              <div className="flex flex-col">
+                <button
+                  onClick={handleIdeaSubmit}
+                  disabled={!state.initialIdea.trim() || isLoading}
+                  className={`
+                    py-5 text-sm font-medium tracking-widest uppercase transition-all duration-500 flex items-center justify-center gap-3
+                    ${state.initialIdea.trim() && !isLoading
+                      ? 'border border-neutral-900 dark:border-white text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                      : 'border border-neutral-200 dark:border-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      {t('preparingQuestions')}
+                    </>
+                  ) : (
+                    t('detailedSetup')
+                  )}
+                </button>
+                <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500 text-center">
+                  {t('detailedSetupDescription')}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -519,7 +607,7 @@ export default function ResearchPage() {
           </div>
         )}
 
-        {/* Step 3: Planning */}
+        {/* Step 3: Planning (상세 모드) */}
         {state.step === 'planning' && !viewingStep && (
           <div className="py-24 text-center">
             <div className="w-16 h-16 mx-auto mb-8 relative">
@@ -532,6 +620,66 @@ export default function ResearchPage() {
             <p className="text-neutral-500 dark:text-neutral-400">
               {t('analyzingResponses')}
             </p>
+          </div>
+        )}
+
+        {/* Quick Planning 로딩 화면 */}
+        {state.step === 'quick-planning' && !viewingStep && (
+          <div className="py-24 text-center">
+            <div className="w-16 h-16 mx-auto mb-8 relative">
+              <div className="absolute inset-0 border-2 border-neutral-200 dark:border-neutral-800 animate-ping" />
+              <div className="absolute inset-0 border-2 border-neutral-900 dark:border-white" />
+            </div>
+            <h3 className="text-2xl font-light text-neutral-900 dark:text-white mb-3">
+              {t('quickStartTitle')}
+            </h3>
+            <p className="text-neutral-500 dark:text-neutral-400 mb-8">
+              {t('quickStartAnalyzing')}
+            </p>
+
+            {/* 3단계 프로그레스 */}
+            <div className="max-w-sm mx-auto space-y-4">
+              {[
+                { key: 'generating-questions' as const, label: t('quickStartStep1') },
+                { key: 'generating-answers' as const, label: t('quickStartStep2') },
+                { key: 'generating-plan' as const, label: t('quickStartStep3') },
+              ].map((item, index) => {
+                const progressOrder = ['generating-questions', 'generating-answers', 'generating-plan']
+                const currentIndex = quickStartProgress ? progressOrder.indexOf(quickStartProgress) : -1
+                const itemIndex = progressOrder.indexOf(item.key)
+                const isActive = itemIndex === currentIndex
+                const isDone = itemIndex < currentIndex
+
+                return (
+                  <div key={item.key} className="flex items-center gap-3">
+                    <div className={`
+                      w-6 h-6 flex items-center justify-center text-xs font-medium transition-all duration-300
+                      ${isDone
+                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                        : isActive
+                          ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 animate-pulse'
+                          : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600'
+                      }
+                    `}>
+                      {isDone ? (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        index + 1
+                      )}
+                    </div>
+                    <span className={`text-sm transition-colors duration-300 ${
+                      isActive || isDone
+                        ? 'text-neutral-900 dark:text-white'
+                        : 'text-neutral-400 dark:text-neutral-600'
+                    }`}>
+                      {item.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -632,6 +780,18 @@ export default function ResearchPage() {
               </>
             ) : (
               <>
+                {/* AI 생성 배지 (Quick Start) */}
+                {state.isQuickStart && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 flex items-start gap-3">
+                    <span className="shrink-0 px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-medium tracking-wider uppercase">
+                      {t('aiGenerated')}
+                    </span>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">
+                      {t('aiGeneratedHint')}
+                    </p>
+                  </div>
+                )}
+
                 {/* 읽기 모드: 이전 답변 표시 */}
                 {state.userAnswers.length > 0 && (
                   <div className="space-y-4">

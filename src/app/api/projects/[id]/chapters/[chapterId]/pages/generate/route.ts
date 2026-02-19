@@ -168,9 +168,9 @@ const PAGE_NEW_PROMPTS: Record<string, string> = {
 const OUTPUT_RULES = `
 
 ## 출력 형식 (절대 준수)
-- 순수 텍스트만 출력
-- 마크다운 기호 절대 금지
-- 문단 구분은 빈 줄만 사용`
+- HTML 태그로 서식 적용: <h3>, <p>, <strong>, <em>, <ul>, <ol>, <li>, <blockquote>
+- 마크다운 기호 금지 (#, *, - 등 직접 사용 금지)
+- 모든 문단은 <p> 태그로 감쌀 것`
 
 function getPageNewPrompt(bookType: string): string {
   const base = PAGE_NEW_PROMPTS[bookType] || PAGE_NEW_PROMPTS.nonfiction
@@ -204,9 +204,9 @@ const PAGE_WRITER_PROMPTS = {
 5. **분량**: 약 1500자
 
 ## 출력 형식 (절대 준수)
-- 순수 텍스트만 출력
-- 마크다운 기호 절대 금지
-- 문단 구분은 빈 줄만 사용`,
+- HTML 태그로 서식 적용: <h3>, <p>, <strong>, <em>, <ul>, <ol>, <li>, <blockquote>
+- 마크다운 기호 금지 (#, *, - 등 직접 사용 금지)
+- 모든 문단은 <p> 태그로 감쌀 것`,
 
   rewrite: `당신은 베테랑 편집자입니다. 원고를 더 나은 버전으로 다듬어주세요.
 
@@ -236,9 +236,9 @@ const PAGE_WRITER_PROMPTS = {
 5. **분량**: 원본과 유사하게 (약 1500자)
 
 ## 출력 형식 (절대 준수)
-- 순수 텍스트만 출력
-- 마크다운 기호 절대 금지
-- 문단 구분은 빈 줄만 사용`,
+- HTML 태그로 서식 적용: <h3>, <p>, <strong>, <em>, <ul>, <ol>, <li>, <blockquote>
+- 마크다운 기호 금지 (#, *, - 등 직접 사용 금지)
+- 모든 문단은 <p> 태그로 감쌀 것`,
 }
 
 function sanitizeForPrompt(text: string): string {

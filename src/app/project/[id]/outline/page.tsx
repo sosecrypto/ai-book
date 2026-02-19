@@ -53,32 +53,59 @@ export default function OutlinePage() {
   const loadExistingData = async () => {
     try {
       const res = await fetch(`/api/projects/${projectId}`)
-      if (res.ok) {
-        const { data: project } = await res.json()
-        setProjectType(project.type || 'fiction')
-        if (project.outline) {
-          setState(prev => ({
-            ...prev,
-            step: project.confirmedAt ? 'confirm' : 'edit',
-            outline: project.outline,
-            settings: {
-              targetAudience: project.targetAudience || '',
-              targetLength: project.targetLength || 200,
-              tone: project.tone || 'casual',
-              customTone: project.customTone || ''
+      if (!res.ok) return
+
+      const { data: project } = await res.json()
+      setProjectType(project.type || 'fiction')
+
+      // 리서치 데이터에서 타겟 독자 정보 추출
+      let researchAudience = ''
+      if (!project.targetAudience) {
+        try {
+          const researchRes = await fetch(`/api/projects/${projectId}/research`)
+          if (researchRes.ok) {
+            const { researchData } = await researchRes.json()
+            if (researchData?.aiQuestions && researchData?.userAnswers) {
+              const audienceQ = researchData.aiQuestions.find(
+                (q: { category: string }) => q.category === 'audience'
+              )
+              if (audienceQ) {
+                const audienceA = researchData.userAnswers.find(
+                  (a: { questionId: string }) => a.questionId === audienceQ.id
+                )
+                if (audienceA?.answer) {
+                  researchAudience = audienceA.answer
+                }
+              }
             }
-          }))
-        } else if (project.targetAudience) {
-          setState(prev => ({
-            ...prev,
-            settings: {
-              targetAudience: project.targetAudience,
-              targetLength: project.targetLength || 200,
-              tone: project.tone || 'casual',
-              customTone: project.customTone || ''
-            }
-          }))
+          }
+        } catch {
+          // 리서치 데이터 로드 실패 무시
         }
+      }
+
+      if (project.outline) {
+        setState(prev => ({
+          ...prev,
+          step: project.confirmedAt ? 'confirm' : 'edit',
+          outline: project.outline,
+          settings: {
+            targetAudience: project.targetAudience || researchAudience,
+            targetLength: project.targetLength || 200,
+            tone: project.tone || 'casual',
+            customTone: project.customTone || ''
+          }
+        }))
+      } else {
+        setState(prev => ({
+          ...prev,
+          settings: {
+            targetAudience: project.targetAudience || researchAudience,
+            targetLength: project.targetLength || 200,
+            tone: project.tone || 'casual',
+            customTone: project.customTone || ''
+          }
+        }))
       }
     } catch {
       // Initial load failure ignored

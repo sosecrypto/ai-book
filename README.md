@@ -25,8 +25,8 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 ### 집필 워크플로우
 - **Research** — AI 질문 기반 책 구상 구체화, 파일 업로드(docx/pdf/txt) 지원
 - **Outline** — 장르별 목차 자동 생성, 드래그앤드롭 편집, 11가지 문체 프리셋 + 커스텀 문체
-- **Write** — InDesign 스타일 페이지 에디터, 챕터 에디터, AI 자동 작성 (새로 작성/이어쓰기/다시쓰기)
-- **Edit** — AI 기반 교정 및 수정 제안
+- **Write** — InDesign 스타일 페이지 에디터, 챕터 에디터, AI 자동 작성 (새로 작성/이어쓰기/다시쓰기), HTML 서식 출력
+- **Edit** — AI 기반 교정 및 수정 제안, TipTap 리치 텍스트 편집
 - **Review** — 최종 검토 및 승인, 자동 피드백 루프, 일관성 검사
 
 ### 차별화 기능
@@ -260,3 +260,7 @@ AUTH_TRUST_HOST=true  # 로컬 개발용
 - [x] 챕터 간 일관성 검사 Agent (캐릭터, 타임라인, 설정 교차 검증)
 - [x] 뉴스레터 구독 + /features, /pricing 페이지
 - [x] ISBN 발급 가이드 + 상태 추적 (draft→applied→issued)
+- [x] AI 집필 HTML 서식 출력 (h3, strong, ul/ol, blockquote 등)
+- [x] 편집 페이지 TipTap 리치 에디터 전환 (textarea → WYSIWYG)
+- [x] 집필 중 챕터 이동 시 콘텐츠 보호 (writingChapter 상태 추적)
+- [x] 편집 단계 진행 조건 완화 (미완성 챕터 경고 후 허용)

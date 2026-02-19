@@ -129,28 +129,31 @@ export default function SettingsStep({ settings, onSettingsChange, onSubmit, isL
           책의 깊이와 범위를 결정합니다
         </p>
         <div className="grid grid-cols-4 gap-4 mb-6">
-          {LENGTH_PRESETS.map((preset) => (
-            <button
-              key={preset.value}
-              onClick={() => onSettingsChange({ ...settings, targetLength: preset.value })}
-              className={`
-                p-4 border transition-all duration-300 text-center
-                ${Math.abs(settings.targetLength - preset.value) < 50
-                  ? 'border-neutral-900 dark:border-white bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                  : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
-                }
-              `}
-            >
-              <div className="text-sm font-medium">{preset.label}</div>
-              <div className={`text-xs mt-1 ${
-                Math.abs(settings.targetLength - preset.value) < 50
-                  ? 'text-neutral-300 dark:text-neutral-600'
-                  : 'text-neutral-400 dark:text-neutral-500'
-              }`}>
-                {preset.description}
-              </div>
-            </button>
-          ))}
+          {LENGTH_PRESETS.map((preset) => {
+            const isSelected = Math.abs(settings.targetLength - preset.value) < 50
+            return (
+              <button
+                key={preset.value}
+                onClick={() => onSettingsChange({ ...settings, targetLength: preset.value })}
+                className={`
+                  p-4 border transition-all duration-300 text-center
+                  ${isSelected
+                    ? 'border-neutral-900 dark:border-white bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                    : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white hover:border-neutral-400 dark:hover:border-neutral-600'
+                  }
+                `}
+              >
+                <div className="text-sm font-medium">{preset.label}</div>
+                <div className={`text-xs mt-1 ${
+                  isSelected
+                    ? 'text-neutral-300 dark:text-neutral-600'
+                    : 'text-neutral-500 dark:text-neutral-400'
+                }`}>
+                  {preset.description}
+                </div>
+              </button>
+            )
+          })}
         </div>
         <div className="flex items-center gap-4">
           <input

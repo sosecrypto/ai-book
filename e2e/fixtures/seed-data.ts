@@ -46,6 +46,16 @@ export const MOCK_RESEARCH_SUMMARY = `
 <p>인공지능이 자의식을 가지게 되면서 발생하는 윤리적 딜레마</p>
 `
 
+export const MOCK_QUICK_START_RESPONSE = {
+  questions: MOCK_RESEARCH_QUESTIONS,
+  answers: [
+    { questionId: 'q1', answer: 'AI 연구원 출신의 30대 프로그래머', timestamp: new Date().toISOString(), source: 'ai' as const },
+    { questionId: 'q2', answer: '2050년 서울, 첨단 기술이 일상화된 메트로폴리스', timestamp: new Date().toISOString(), source: 'ai' as const },
+    { questionId: 'q3', answer: 'AI의 자의식 획득으로 인한 인간-AI 윤리 갈등', timestamp: new Date().toISOString(), source: 'ai' as const },
+  ],
+  summary: MOCK_RESEARCH_SUMMARY,
+}
+
 export const MOCK_OUTLINE = {
   synopsis: 'AI가 자의식을 갖게 되는 미래 세계의 이야기',
   chapters: [
@@ -111,8 +121,4 @@ export const MOCK_EVALUATION = {
   feedback: '전반적으로 잘 작성된 원고입니다. 캐릭터 개발이 잘 되어 있으며, 플롯의 흐름이 자연스럽습니다.',
 }
 
-export const MOCK_STREAM_RESPONSE = `제1장: 시작
-
-도시의 불빛이 밤하늘을 물들였다.
-
-연구소의 창문 너머로 보이는 네온사인은 마치 미래를 예고하는 듯했다.`
+export const MOCK_STREAM_RESPONSE = `<h3>첫 번째 장면</h3><p>도시의 불빛이 밤하늘을 물들였다. 연구소의 창문 너머로 보이는 네온사인은 마치 미래를 예고하는 듯했다.</p><p><strong>그녀는 멈춰 섰다.</strong> 낯선 소리가 등 뒤에서 들려왔다.</p>`

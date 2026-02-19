@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import StageHeader from '@/components/project/StageHeader'
+import RichTextEditor from '@/components/RichTextEditor'
 import { BookOutline, Chapter, EditSuggestion } from '@/types/book'
 
 interface EditState {
@@ -273,7 +274,7 @@ export default function EditPage() {
                 {state.currentChapter}. {state.outline?.chapters.find(c => c.number === state.currentChapter)?.title}
               </h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                {t('charCount', { count: state.editedContent.length.toLocaleString() })}
+                {t('charCount', { count: state.editedContent.replace(/<[^>]*>/g, '').length.toLocaleString() })}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -317,12 +318,14 @@ export default function EditPage() {
           <div className="flex-1 flex overflow-hidden">
             {/* Text Editor */}
             <div className="flex-1 p-8">
-              <textarea
-                value={state.editedContent}
-                onChange={(e) => setState(prev => ({ ...prev, editedContent: e.target.value }))}
-                className="w-full h-full p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors resize-none font-light leading-relaxed"
-                style={{ minHeight: '500px' }}
-              />
+              <div className="h-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-auto">
+                <RichTextEditor
+                  value={state.editedContent}
+                  onChange={(html) => setState(prev => ({ ...prev, editedContent: html }))}
+                  placeholder="편집할 내용이 없습니다"
+                  className="min-h-[500px]"
+                />
+              </div>
             </div>
 
             {/* Suggestions Panel */}

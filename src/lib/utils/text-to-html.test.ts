@@ -23,6 +23,31 @@ describe('textToHtml', () => {
       const html = '<h1>제목</h1><p>내용</p>'
       expect(textToHtml(html)).toBe(html)
     })
+
+    it('<h3>, <strong> 등 서식 태그가 있으면 그대로 반환한다', () => {
+      const html = '<h3>소제목</h3><p><strong>강조</strong> 텍스트</p>'
+      expect(textToHtml(html)).toBe(html)
+    })
+
+    it('<ul>/<ol> 리스트 태그가 있으면 그대로 반환한다', () => {
+      const html = '<p>목록:</p><ul><li>항목 1</li><li>항목 2</li></ul>'
+      expect(textToHtml(html)).toBe(html)
+    })
+
+    it('<blockquote> 태그가 있으면 그대로 반환한다', () => {
+      const html = '<blockquote>인용문입니다</blockquote><p>본문</p>'
+      expect(textToHtml(html)).toBe(html)
+    })
+
+    it('<em> 태그가 있으면 그대로 반환한다', () => {
+      const html = '<p><em>기울임</em> 텍스트</p>'
+      expect(textToHtml(html)).toBe(html)
+    })
+
+    it('AI가 생성한 복합 HTML을 그대로 반환한다', () => {
+      const html = '<h3>첫 번째 장면</h3><p>도시의 불빛이 밤하늘을 물들였다.</p><p><strong>그녀는 멈춰 섰다.</strong></p>'
+      expect(textToHtml(html)).toBe(html)
+    })
   })
 
   describe('평문 텍스트 변환', () => {

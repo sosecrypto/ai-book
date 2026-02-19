@@ -2,6 +2,7 @@ import { Page } from '@playwright/test'
 import {
   MOCK_RESEARCH_QUESTIONS,
   MOCK_RESEARCH_SUMMARY,
+  MOCK_QUICK_START_RESPONSE,
   MOCK_OUTLINE,
   MOCK_CHAPTER_CONTENT,
   MOCK_EDIT_SUGGESTIONS,
@@ -31,6 +32,19 @@ export async function mockResearchPlanAPI(page: Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ summary: MOCK_RESEARCH_SUMMARY }),
+    })
+  })
+}
+
+/**
+ * Mock quick start API
+ */
+export async function mockQuickStartAPI(page: Page) {
+  await page.route('**/api/projects/*/research/quick-start', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_QUICK_START_RESPONSE),
     })
   })
 }
@@ -132,6 +146,7 @@ export async function mockConsistencyAPI(page: Page) {
 export async function mockAllAIAPIs(page: Page) {
   await mockResearchQuestionsAPI(page)
   await mockResearchPlanAPI(page)
+  await mockQuickStartAPI(page)
   await mockOutlineAPI(page)
   await mockWriteAPI(page)
   await mockEditAPI(page)

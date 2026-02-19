@@ -257,11 +257,15 @@ const OUTPUT_FORMAT_RULES = `
 
 ## 출력 형식 (절대 준수)
 
-- 순수 텍스트만 출력
-- 마크다운 기호 절대 금지 (샵, 별표, 대시, 백틱, 꺾쇠 등)
-- 소제목이 필요하면 일반 텍스트로 작성
-- 문단 구분은 빈 줄 하나만 사용
-- 들여쓰기 없음`
+- HTML 태그를 사용하여 서식을 적용할 것
+- 허용 태그: <h2>, <h3>, <p>, <strong>, <em>, <ul>, <ol>, <li>, <blockquote>
+- 마크다운 기호 절대 금지 (#, *, -, \`\`\`, > 등 직접 사용 금지)
+- 모든 문단은 <p> 태그로 감쌀 것
+- 소제목은 <h3> 태그 사용 (챕터 제목은 별도 표시되므로 <h2>는 드물게)
+- 강조할 핵심 문구는 <strong> 태그 사용
+- 나열이 필요하면 <ul>/<ol> + <li> 태그 사용
+- 인용구는 <blockquote> 태그 사용
+- <script>, <style>, <iframe> 등 위험 태그 절대 금지`
 
 function getWriterPrompt(bookType: string): string {
   const basePrompt = WRITER_PROMPTS[bookType] || DEFAULT_WRITER_PROMPT

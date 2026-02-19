@@ -21,6 +21,7 @@ interface WriteState {
   chapters: Map<number, Chapter>
   currentChapter: number
   isWriting: boolean
+  writingChapter: number | null
   streamingContent: string
 }
 
@@ -40,6 +41,7 @@ export default function WritePage() {
     chapters: new Map(),
     currentChapter: 1,
     isWriting: false,
+    writingChapter: null,
     streamingContent: ''
   })
   const [isSaving, setIsSaving] = useState(false)
@@ -253,9 +255,11 @@ export default function WritePage() {
     }
 
     // continue 모드일 때 기존 내용을 스트리밍 콘텐츠 초기값으로 설정
+    const writingChapterNumber = state.currentChapter
     setState(prev => ({
       ...prev,
       isWriting: true,
+      writingChapter: writingChapterNumber,
       streamingContent: mode === 'continue' ? existingContent : ''
     }))
     setError(null)
@@ -298,11 +302,10 @@ export default function WritePage() {
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
         fullContent += chunk
-        // 스트리밍 중에도 HTML 변환 적용 (실시간 문단 표시)
-        // continue 모드면 기존 내용 + 새 내용
+        // 스트리밍 중에는 raw 콘텐츠 직접 표시 (HTML 태그가 점진적으로 쌓임)
         const displayContent = mode === 'continue'
-          ? existingContent + textToHtml(fullContent)
-          : textToHtml(fullContent)
+          ? existingContent + fullContent
+          : fullContent
         setState(prev => ({ ...prev, streamingContent: displayContent }))
       }
 
@@ -314,7 +317,7 @@ export default function WritePage() {
         : htmlContent
 
       const updatedChapter: Chapter = {
-        number: state.currentChapter,
+        number: writingChapterNumber,
         title: chapterOutline.title,
         content: finalContent,
         status: 'writing',
@@ -323,19 +326,20 @@ export default function WritePage() {
 
       setState(prev => {
         const newChapters = new Map(prev.chapters)
-        newChapters.set(state.currentChapter, updatedChapter)
+        newChapters.set(writingChapterNumber, updatedChapter)
         return {
           ...prev,
           chapters: newChapters,
           isWriting: false,
+          writingChapter: null,
           streamingContent: ''
         }
       })
 
-      await saveChapter(state.currentChapter, updatedChapter)
+      await saveChapter(writingChapterNumber, updatedChapter)
     } catch {
       setError('AI writing failed. Please try again.')
-      setState(prev => ({ ...prev, isWriting: false }))
+      setState(prev => ({ ...prev, isWriting: false, writingChapter: null }))
     }
   }
 
@@ -550,17 +554,27 @@ export default function WritePage() {
     setParsedFile(null)
   }
 
-  const allChaptersDone = (): boolean => {
-    if (!state.outline) return false
-    return state.outline.chapters.every(ch => {
+  const getIncompleteChapterCount = (): number => {
+    if (!state.outline) return 0
+    return state.outline.chapters.filter(ch => {
       const chapter = state.chapters.get(ch.number)
-      return chapter && chapter.content && chapter.content.length > 2000
-    })
+      return !chapter || !chapter.content || chapter.content.length < 100
+    }).length
+  }
+
+  const handleNextStageWithConfirm = async () => {
+    const incompleteCount = getIncompleteChapterCount()
+    if (incompleteCount > 0) {
+      const message = t('incompleteWarning', { count: incompleteCount })
+      if (!window.confirm(message)) return
+    }
+    await handleNextStage()
   }
 
   const currentChapter = getCurrentChapter()
   const currentChapterOutline = getCurrentChapterOutline()
-  const displayContent = state.isWriting ? state.streamingContent : (currentChapter?.content || '')
+  const isWritingCurrentChapter = state.isWriting && state.writingChapter === state.currentChapter
+  const displayContent = isWritingCurrentChapter ? state.streamingContent : (currentChapter?.content || '')
 
   return (
     <div className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden transition-colors duration-700">
@@ -569,7 +583,7 @@ export default function WritePage() {
         description={t('description')}
         stage="write"
         onPrevious={handlePreviousStage}
-        onNext={allChaptersDone() ? handleNextStage : undefined}
+        onNext={handleNextStageWithConfirm}
         nextLabel={t('nextLabel')}
         previousLabel={t('previousLabel')}
       >
@@ -695,7 +709,7 @@ export default function WritePage() {
             <ChapterEditor
               chapterOutline={currentChapterOutline}
               content={displayContent}
-              isWriting={state.isWriting}
+              isWriting={isWritingCurrentChapter}
               currentChapter={state.currentChapter}
               totalChapters={state.outline?.chapters.length || 0}
               projectId={projectId}
