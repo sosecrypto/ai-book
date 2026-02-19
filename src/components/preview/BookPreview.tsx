@@ -134,15 +134,15 @@ export function BookPreview({
     : undefined
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-gray-800/50 border-b border-gray-700 sticky top-0 z-10 backdrop-blur-sm">
+      <header className="bg-gray-100/80 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             {viewMode !== 'cover' && (
               <button
                 onClick={() => setViewMode('cover')}
-                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -150,12 +150,12 @@ export function BookPreview({
                 표지
               </button>
             )}
-            <h1 className="text-xl font-bold text-white">{project.title}</h1>
+            <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{project.title}</h1>
             <span
               className={`px-2 py-1 rounded-full text-xs ${
                 project.status === 'completed'
-                  ? 'bg-green-500/20 text-green-400'
-                  : 'bg-yellow-500/20 text-yellow-400'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
               }`}
             >
               {project.status === 'completed' ? '완료' : '작성 중'}
@@ -166,7 +166,7 @@ export function BookPreview({
             {/* 메타데이터 버튼 */}
             <button
               onClick={() => setActiveModal('metadata')}
-              className="px-3 py-2 text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm"
+              className="px-3 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5 text-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -177,7 +177,7 @@ export function BookPreview({
             {/* ISBN 버튼 */}
             <button
               onClick={() => setActiveModal('isbn')}
-              className="px-3 py-2 text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm"
+              className="px-3 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5 text-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
@@ -188,7 +188,7 @@ export function BookPreview({
             {/* 표지 디자인 */}
             <button
               onClick={() => setActiveModal('cover')}
-              className="px-3 py-2 text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1.5 text-sm"
+              className="px-3 py-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors flex items-center gap-1.5 text-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -200,7 +200,7 @@ export function BookPreview({
             <button
               onClick={() => setActivePanel(activePanel === 'sources' ? 'none' : 'sources')}
               className={`px-3 py-2 transition-colors flex items-center gap-1.5 text-sm ${
-                activePanel === 'sources' ? 'text-blue-400' : 'text-gray-400 hover:text-white'
+                activePanel === 'sources' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +213,7 @@ export function BookPreview({
             <button
               onClick={() => setActivePanel(activePanel === 'memos' ? 'none' : 'memos')}
               className={`px-3 py-2 transition-colors flex items-center gap-1.5 text-sm ${
-                activePanel === 'memos' ? 'text-yellow-400' : 'text-gray-400 hover:text-white'
+                activePanel === 'memos' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +224,7 @@ export function BookPreview({
 
             <button
               onClick={onEdit}
-              className="px-3 py-2 text-gray-300 hover:text-white transition-colors text-sm"
+              className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors text-sm"
             >
               편집
             </button>
@@ -253,28 +253,28 @@ export function BookPreview({
               </button>
 
               {showExportMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
                   <button
                     onClick={onDownloadPDF}
-                    className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 flex items-center gap-3 rounded-t-lg"
+                    className="w-full px-4 py-3 text-left text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 rounded-t-lg"
                   >
                     <span className="text-red-400 font-medium">PDF</span>
-                    <span className="text-gray-400 text-sm">기본 형식</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">기본 형식</span>
                   </button>
                   <button
                     onClick={handleExportEPUB}
-                    className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
                   >
                     <span className="text-green-400 font-medium">EPUB</span>
-                    <span className="text-gray-400 text-sm">전자책 / Kindle</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">전자책 / Kindle</span>
                   </button>
-                  <div className="border-t border-gray-700" />
+                  <div className="border-t border-gray-200 dark:border-gray-700" />
                   <button
                     onClick={handleExportPrintCover}
-                    className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 flex items-center gap-3 rounded-b-lg"
+                    className="w-full px-4 py-3 text-left text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 rounded-b-lg"
                   >
                     <span className="text-purple-400 font-medium">CMYK</span>
-                    <span className="text-gray-400 text-sm">인쇄용 표지</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">인쇄용 표지</span>
                   </button>
                 </div>
               )}

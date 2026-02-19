@@ -68,21 +68,21 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      <div className="bg-gray-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
         {/* Header */}
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-white">표지 디자인</h2>
-          <p className="text-gray-400 mt-1">{project.title}</p>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">표지 디자인</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{project.title}</p>
         </div>
 
         {/* Mode tabs */}
-        <div className="flex border-b border-gray-700">
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setMode('template')}
             className={`flex-1 py-3 text-center transition-colors ${
               mode === 'template'
-                ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-b-2 border-blue-500'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             템플릿 선택
@@ -91,8 +91,8 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
             onClick={() => setMode('ai')}
             className={`flex-1 py-3 text-center transition-colors ${
               mode === 'ai'
-                ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-b-2 border-blue-500'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             AI 생성
@@ -103,7 +103,7 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
         <div className="p-6">
           {mode === 'template' && (
             <div>
-              <p className="text-gray-400 mb-4">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
                 책 유형에 맞는 템플릿이 추천되었습니다. 원하는 템플릿을 선택하세요.
               </p>
 
@@ -122,7 +122,7 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   onClick={onCancel}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   취소
                 </button>
@@ -138,25 +138,25 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
 
           {mode === 'ai' && (
             <div>
-              <p className="text-gray-400 mb-4">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
                 AI가 책 내용에 맞는 표지 이미지를 생성합니다. DALL-E API 키가 필요합니다.
               </p>
 
               <div className="mb-4">
-                <label className="block text-sm text-gray-300 mb-2">
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
                   커스텀 프롬프트 (선택사항)
                 </label>
                 <textarea
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-neutral-900 dark:text-white focus:border-blue-500 focus:outline-none"
                   placeholder="원하는 스타일이나 요소를 설명하세요..."
                   rows={3}
                 />
               </div>
 
               {error && (
-                <div className="mb-4 p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-200">
+                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-200">
                   {error}
                 </div>
               )}
@@ -174,7 +174,7 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
               <div className="flex justify-end gap-3">
                 <button
                   onClick={onCancel}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   취소
                 </button>
@@ -183,7 +183,7 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
                     <button
                       onClick={handleGenerateAI}
                       disabled={isGeneratingAI}
-                      className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     >
                       다시 생성
                     </button>

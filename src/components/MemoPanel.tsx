@@ -32,8 +32,8 @@ export function MemoPanel({ projectId, isOpen, onClose, currentChapter }: MemoPa
           updatedAt: new Date(m.updatedAt),
         })))
       }
-    } catch (error) {
-      console.error('메모 로드 실패:', error)
+    } catch (_error) {
+      // 에러는 UI에서 처리
     } finally {
       setIsLoading(false)
     }
@@ -69,8 +69,8 @@ export function MemoPanel({ projectId, isOpen, onClose, currentChapter }: MemoPa
         setIsAdding(false)
         setLinkToChapter(false)
       }
-    } catch (error) {
-      console.error('메모 추가 실패:', error)
+    } catch (_error) {
+      // 에러는 UI에서 처리
     }
   }
 
@@ -97,8 +97,8 @@ export function MemoPanel({ projectId, isOpen, onClose, currentChapter }: MemoPa
         setEditingId(null)
         setEditContent('')
       }
-    } catch (error) {
-      console.error('메모 수정 실패:', error)
+    } catch (_error) {
+      // 에러는 UI에서 처리
     }
   }
 
@@ -114,8 +114,8 @@ export function MemoPanel({ projectId, isOpen, onClose, currentChapter }: MemoPa
       if (data.success) {
         setMemos(memos.filter(m => m.id !== memoId))
       }
-    } catch (error) {
-      console.error('메모 삭제 실패:', error)
+    } catch (_error) {
+      // 에러는 UI에서 처리
     }
   }
 

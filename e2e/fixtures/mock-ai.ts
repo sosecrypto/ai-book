@@ -92,6 +92,41 @@ export async function mockReviewAPI(page: Page) {
 }
 
 /**
+ * Mock feedback loop API (editor-critic)
+ */
+export async function mockFeedbackLoopAPI(page: Page) {
+  await page.route('**/api/projects/*/review/feedback-loop', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        iteration: 1,
+        evaluation: MOCK_EVALUATION,
+        status: 'passed',
+      }),
+    })
+  })
+}
+
+/**
+ * Mock consistency check API
+ */
+export async function mockConsistencyAPI(page: Page) {
+  await page.route('**/api/projects/*/consistency', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        issues: [],
+        score: 95,
+      }),
+    })
+  })
+}
+
+/**
  * Mock all AI APIs at once
  */
 export async function mockAllAIAPIs(page: Page) {
@@ -101,6 +136,8 @@ export async function mockAllAIAPIs(page: Page) {
   await mockWriteAPI(page)
   await mockEditAPI(page)
   await mockReviewAPI(page)
+  await mockFeedbackLoopAPI(page)
+  await mockConsistencyAPI(page)
 }
 
 /**

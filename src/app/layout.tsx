@@ -4,7 +4,6 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import Providers from '@/app/providers'
-import DevTools from '@/components/DevTools'
 import './globals.css'
 
 const inter = Inter({
@@ -70,7 +69,6 @@ export default async function RootLayout({
             </ToastProvider>
           </NextIntlClientProvider>
         </Providers>
-        <DevTools />
       </body>
     </html>
   )
