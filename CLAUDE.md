@@ -34,7 +34,8 @@ ai-book/
 │   │   │   ├── newsletter/  # Newsletter subscription API
 │   │   │   ├── projects/    # Project CRUD, outline, write, edit, review, consistency
 │   │   │   ├── stream/      # Streaming API
-│   │   │   └── upload/      # File upload API
+│   │   │   ├── upload/      # File upload API
+│   │   │   └── usage/       # Token usage API
 │   │   ├── (legal)/         # Legal pages (privacy, terms)
 │   │   ├── auth/            # Login/Register/Error pages
 │   │   ├── features/        # Features page
@@ -56,7 +57,7 @@ ai-book/
 │   │   ├── page-editor/     # TipTap page editor
 │   │   ├── preview/         # Book preview
 │   │   ├── project/         # Project common components
-│   │   ├── ui/              # Common UI (Toast etc.)
+│   │   ├── ui/              # Common UI (Toast, TokenUsageBar etc.)
 │   │   ├── upload/          # File upload
 │   │   ├── review/          # Feedback loop, consistency report
 │   │   └── write/           # Write-related components
@@ -79,6 +80,7 @@ ai-book/
 │   │   ├── isbn.ts          # ISBN utilities
 │   │   ├── plot-structures.ts # Plot structure templates (6 types)
 │   │   ├── pdf.ts           # PDF export
+│   │   ├── token-quota.ts   # Token quota (checkQuota, recordUsage, ensureUserQuota)
 │   │   ├── rate-limit.ts    # Upstash-based Rate Limiting
 │   │   ├── sanitize.ts      # DOMPurify HTML sanitization
 │   │   ├── store.ts         # Zustand store
@@ -91,7 +93,7 @@ ai-book/
 ├── e2e/                     # E2E tests (Playwright)
 ├── sentry.*.config.ts       # Sentry config (client/server/edge)
 ├── .github/workflows/       # CI/CD (GitHub Actions)
-├── prisma/schema.prisma     # DB schema (18 models, PostgreSQL)
+├── prisma/schema.prisma     # DB schema (19 models, PostgreSQL)
 └── vitest.config.ts         # Test configuration
 ```
 

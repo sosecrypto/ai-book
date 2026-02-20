@@ -58,16 +58,24 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 - **ISBN 관리** — ISBN-10/13 검증, 바코드 생성, 발급 상태 추적
 - **메타데이터** — 저자, 출판사, 저작권 정보 관리
 
+### 토큰 쿼터 시스템
+- **사용량 추적** — 12개 AI 라우트에서 토큰 사용량 자동 기록 (try-finally 패턴)
+- **사전 차단** — 모든 AI 요청 시 checkQuota로 한도 초과 사전 검증
+- **사용량 UI** — TokenUsageBar 컴포넌트 (80/90/100% 단계별 경고, 적응형 폴링)
+- **즉시 갱신** — AI 호출 완료 후 CustomEvent로 사용량 바 즉시 업데이트
+- **리셋 안내** — 한도 초과 시 리셋 날짜 표시 + 플랜 업그레이드 CTA
+- **접근성** — role="progressbar", aria-live="polite" 등 ARIA 속성
+
 ### 보안 & 인프라
 - **NextAuth.js v5** 기반 인증 시스템 (JWT 세션)
 - 이메일/비밀번호 로그인 (bcryptjs 해싱)
 - Google OAuth 지원 (선택)
 - 모든 API 라우트 인증 보호 (34개 라우트)
-- 프로젝트 소유권 검증 (데이터 격리)
+- 프로젝트 소유권 검증 (데이터 격리, projectOwnerWhere)
 - **CSRF 보호** — Origin/Referer 헤더 검증 (proxy.ts 통합)
-- **Rate Limiting** — Upstash Redis 기반 3단계 제한 (auth: 5/min, AI: 10/min, general: 60/min)
+- **Rate Limiting** — Upstash Redis 3단계 (auth: 5/min, AI: 10/min, general: 60/min) + 회원가입 in-memory (3회/10분)
 - **XSS 방지** — DOMPurify HTML sanitization (dangerouslySetInnerHTML 보호)
-- **API 재시도** — Claude API exponential backoff (429/5xx 자동 재시도, 최대 3회)
+- **API 재시도** — Claude API exponential backoff (429/5xx 자동 재시도, 최대 3회, 누적 usage 추적)
 - **Sentry 에러 모니터링** — 클라이언트/서버/엣지 통합, handleApiError 공통 유틸
 - **CI/CD** — GitHub Actions (tsc → test → build)
 - **Health Check** — `/api/health` 엔드포인트 (DB + 환경변수 검사)
@@ -134,7 +142,8 @@ ai-book/
 │   │   │   ├── newsletter/   # 뉴스레터 구독 API
 │   │   │   ├── projects/    # 프로젝트 CRUD, outline, write, edit, review, consistency
 │   │   │   ├── stream/      # 스트리밍 API
-│   │   │   └── upload/      # 파일 업로드 API
+│   │   │   ├── upload/      # 파일 업로드 API
+│   │   │   └── usage/       # 토큰 사용량 API
 │   │   ├── (legal)/         # 법적 페이지 (privacy, terms)
 │   │   ├── auth/            # 로그인/회원가입/에러 페이지
 │   │   ├── features/        # 기능 소개 페이지
@@ -156,7 +165,7 @@ ai-book/
 │   │   ├── page-editor/     # TipTap 페이지 에디터
 │   │   ├── preview/         # 북 프리뷰
 │   │   ├── project/         # 프로젝트 공통 컴포넌트
-│   │   ├── ui/              # 공통 UI (Toast 등)
+│   │   ├── ui/              # 공통 UI (Toast, TokenUsageBar 등)
 │   │   ├── upload/          # 파일 업로드
 │   │   ├── review/          # 피드백 루프, 일관성 검사 리포트
 │   │   └── write/           # 집필 관련 컴포넌트
@@ -179,6 +188,7 @@ ai-book/
 │   │   ├── isbn.ts          # ISBN 유틸리티
 │   │   ├── plot-structures.ts # 플롯 구조 템플릿 (6종)
 │   │   ├── pdf.ts           # PDF 내보내기
+│   │   ├── token-quota.ts   # 토큰 쿼터 (checkQuota, recordUsage, ensureUserQuota)
 │   │   ├── rate-limit.ts    # Upstash 기반 Rate Limiting
 │   │   ├── sanitize.ts      # DOMPurify HTML sanitization
 │   │   ├── store.ts         # Zustand 스토어
@@ -191,7 +201,7 @@ ai-book/
 ├── e2e/                     # E2E 테스트 (Playwright)
 ├── sentry.*.config.ts       # Sentry 설정 (client/server/edge)
 ├── .github/workflows/       # CI/CD (GitHub Actions)
-├── prisma/schema.prisma     # DB 스키마 (18 models, PostgreSQL)
+├── prisma/schema.prisma     # DB 스키마 (19 models, PostgreSQL)
 └── vitest.config.ts         # 테스트 설정
 ```
 
@@ -260,7 +270,7 @@ DATABASE_URL=         # PostgreSQL 연결 문자열
 - [x] 다크/라이트 모드 완전 지원
 - [x] 카테고리 선택 UI (BISAC/KDC/DDC/custom)
 - [x] 사용자 인증 (NextAuth.js v5, JWT, Google OAuth)
-- [x] 테스트 커버리지 80% 달성 (72 files / 700 tests)
+- [x] 테스트 커버리지 80% 달성 (77 files / 768 tests)
 - [x] 커버리지 미달 파일 개선 완료 (useAIChat, file-parser, useStreamingGeneration, isbn 등)
 - [x] 프로젝트 검색/필터/정렬
 - [x] 전역 에러 바운더리 & 404
@@ -292,3 +302,6 @@ DATABASE_URL=         # PostgreSQL 연결 문자열
 - [x] API 재시도 로직 (exponential backoff)
 - [x] Health Check 엔드포인트 (/api/health)
 - [x] 개인정보 처리방침 & 이용약관 페이지
+- [x] 토큰 쿼터 시스템 (사용량 추적, 한도 차단, 적응형 UI)
+- [x] 회원가입 in-memory rate limit (3회/10분)
+- [x] 프로젝트 소유권 검증 강화 (전체 AI 라우트)
