@@ -21,6 +21,7 @@ import {
   parseBuffer,
 } from './file-parser'
 import mammoth from 'mammoth'
+// @ts-expect-error pdf-parse has no default export type but vi.mock provides one
 import pdfParse from 'pdf-parse'
 
 const mockMammoth = vi.mocked(mammoth)

@@ -70,7 +70,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/jsbarcode": "^3.11.4",
     "@types/marked": "^5.0.2",
-    "@types/pdf-parse": "^1.1.5",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.18",
     "canvas": "^3.2.1",

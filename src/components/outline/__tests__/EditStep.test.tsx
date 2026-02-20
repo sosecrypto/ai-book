@@ -23,6 +23,8 @@ const mockOutline: BookOutline = {
     },
   ],
   estimatedPages: 40,
+  targetAudience: '일반 독자',
+  tone: 'neutral',
 }
 
 const defaultProps = {

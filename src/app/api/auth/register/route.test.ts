@@ -16,7 +16,8 @@ vi.mock('@/lib/auth/password', () => ({
 }))
 
 import { prisma } from '@/lib/db/client'
-const mockPrisma = vi.mocked(prisma)
+const mockFindUnique = prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>
+const mockCreate = prisma.user.create as unknown as ReturnType<typeof vi.fn>
 
 function createRequest(body: Record<string, unknown>): NextRequest {
   return new NextRequest('http://localhost:3000/api/auth/register', {
@@ -32,8 +33,8 @@ describe('POST /api/auth/register', () => {
   })
 
   it('should register a new user successfully', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(null)
-    mockPrisma.user.create.mockResolvedValue({
+    mockFindUnique.mockResolvedValue(null)
+    mockCreate.mockResolvedValue({
       id: 'user-1',
       email: 'test@test.com',
       name: '테스트',
@@ -89,7 +90,7 @@ describe('POST /api/auth/register', () => {
   })
 
   it('should return 409 for duplicate email', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({
+    mockFindUnique.mockResolvedValue({
       id: 'existing-user',
       email: 'test@test.com',
       name: '기존 사용자',
@@ -116,8 +117,8 @@ describe('POST /api/auth/register', () => {
 
   it('should hash the password before storing', async () => {
     const { hashPassword } = await import('@/lib/auth/password')
-    mockPrisma.user.findUnique.mockResolvedValue(null)
-    mockPrisma.user.create.mockResolvedValue({
+    mockFindUnique.mockResolvedValue(null)
+    mockCreate.mockResolvedValue({
       id: 'user-1',
       email: 'test@test.com',
       name: '테스트',
@@ -138,7 +139,7 @@ describe('POST /api/auth/register', () => {
     )
 
     expect(hashPassword).toHaveBeenCalledWith('Password123!')
-    expect(mockPrisma.user.create).toHaveBeenCalledWith({
+    expect(mockCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         password: '$2a$12$hashedpassword',
       }),

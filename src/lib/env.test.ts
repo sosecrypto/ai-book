@@ -29,7 +29,7 @@ describe('env', () => {
   })
 
   it('should throw when ANTHROPIC_API_KEY is missing', async () => {
-    delete process.env.ANTHROPIC_API_KEY
+    ;(process.env as Record<string, string | undefined>).ANTHROPIC_API_KEY = undefined
     const { env } = await import('./env')
     resetEnv()
     expect(() => env.ANTHROPIC_API_KEY).toThrow(
@@ -38,7 +38,7 @@ describe('env', () => {
   })
 
   it('should throw when AUTH_SECRET is missing', async () => {
-    delete process.env.AUTH_SECRET
+    ;(process.env as Record<string, string | undefined>).AUTH_SECRET = undefined
     const { env } = await import('./env')
     resetEnv()
     expect(() => env.AUTH_SECRET).toThrow(
@@ -47,14 +47,14 @@ describe('env', () => {
   })
 
   it('should use default DATABASE_URL when not set', async () => {
-    delete process.env.DATABASE_URL
+    ;(process.env as Record<string, string | undefined>).DATABASE_URL = undefined
     const { env } = await import('./env')
     resetEnv()
     expect(env.DATABASE_URL).toBe('file:./prisma/dev.db')
   })
 
   it('should use default NODE_ENV when not set', async () => {
-    delete process.env.NODE_ENV
+    ;(process.env as Record<string, string | undefined>).NODE_ENV = undefined
     const { env } = await import('./env')
     resetEnv()
     expect(env.NODE_ENV).toBe('development')
@@ -73,7 +73,7 @@ describe('env', () => {
   })
 
   it('should reject invalid NODE_ENV', async () => {
-    process.env.NODE_ENV = 'invalid' as string
+    ;(process.env as Record<string, string | undefined>).NODE_ENV = 'invalid'
     const { env } = await import('./env')
     resetEnv()
     expect(() => env.NODE_ENV).toThrow(
