@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { z } from 'zod'
 
@@ -43,11 +44,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, data: memos })
   } catch (error) {
-    console.error('메모 조회 오류:', error)
-    return NextResponse.json(
-      { success: false, error: '메모를 불러오는데 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/memos', method: 'GET' })
   }
 }
 
@@ -78,11 +75,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-    console.error('메모 생성 오류:', error)
-    return NextResponse.json(
-      { success: false, error: '메모 생성에 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/memos', method: 'POST' })
   }
 }
 
@@ -129,11 +122,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-    console.error('메모 수정 오류:', error)
-    return NextResponse.json(
-      { success: false, error: '메모 수정에 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/memos', method: 'PATCH' })
   }
 }
 
@@ -171,10 +160,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, message: '메모가 삭제되었습니다.' })
   } catch (error) {
-    console.error('메모 삭제 오류:', error)
-    return NextResponse.json(
-      { success: false, error: '메모 삭제에 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/memos', method: 'DELETE' })
   }
 }

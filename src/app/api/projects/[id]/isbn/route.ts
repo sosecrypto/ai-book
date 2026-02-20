@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { validateAndParseISBN, formatISBN, convertISBN13to10 } from '@/lib/isbn'
@@ -53,11 +54,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       data,
     })
   } catch (error) {
-    console.error('Failed to get ISBN:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to get ISBN' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/isbn', method: 'GET' })
   }
 }
 
@@ -139,11 +136,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       formatted: formatISBN(isbn13),
     })
   } catch (error) {
-    console.error('Failed to save ISBN:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to save ISBN' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/isbn', method: 'POST' })
   }
 }
 
@@ -188,11 +181,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-    console.error('Failed to update ISBN status:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to update ISBN status' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/isbn', method: 'PATCH' })
   }
 }
 
@@ -212,10 +201,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       success: true,
     })
   } catch (error) {
-    console.error('Failed to delete ISBN:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete ISBN' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/isbn', method: 'DELETE' })
   }
 }

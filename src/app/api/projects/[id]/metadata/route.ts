@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { BookMetadata, Author, BookCategory } from '@/types/book'
 
@@ -51,11 +52,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       data: parsed,
     })
   } catch (error) {
-    console.error('Failed to get metadata:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to get metadata' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/metadata', method: 'GET' })
   }
 }
 
@@ -140,11 +137,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: parsed,
     })
   } catch (error) {
-    console.error('Failed to save metadata:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to save metadata' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/metadata', method: 'POST' })
   }
 }
 
@@ -164,10 +157,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       success: true,
     })
   } catch (error) {
-    console.error('Failed to delete metadata:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete metadata' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/metadata', method: 'DELETE' })
   }
 }

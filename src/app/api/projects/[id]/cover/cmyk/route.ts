@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import {
   prepareForPrint,
@@ -89,11 +90,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     })
   } catch (error) {
-    console.error('Failed to generate print cover:', error)
-    return NextResponse.json(
-      { success: false, error: '인쇄용 표지 생성에 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/cover/cmyk', method: 'POST' })
   }
 }
 
@@ -152,10 +149,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     })
   } catch (error) {
-    console.error('Failed to validate cover:', error)
-    return NextResponse.json(
-      { success: false, error: '표지 검사에 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/cover/cmyk', method: 'GET' })
   }
 }

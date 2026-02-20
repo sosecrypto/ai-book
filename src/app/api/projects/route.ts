@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { projectRepository } from '@/lib/db/project-repository'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import type { UploadFileType } from '@/types/book'
 
 interface SourceFileData {
@@ -26,10 +27,7 @@ export async function GET() {
     const projects = await projectRepository.findAll(userId!)
     return NextResponse.json({ success: true, data: projects })
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: '프로젝트 목록을 불러오는데 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects', method: 'GET' })
   }
 }
 
@@ -65,10 +63,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: project }, { status: 201 })
   } catch (error) {
-    console.error('Project creation error:', error)
-    return NextResponse.json(
-      { success: false, error: '프로젝트 생성에 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects', method: 'POST' })
   }
 }

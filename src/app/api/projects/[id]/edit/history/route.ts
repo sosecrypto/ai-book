@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 
 export async function POST(
@@ -27,11 +28,7 @@ export async function POST(
 
     return NextResponse.json({ history })
   } catch (error) {
-    console.error('Failed to save edit history:', error)
-    return NextResponse.json(
-      { error: 'Failed to save edit history' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/edit/history', method: 'POST' })
   }
 }
 
@@ -59,10 +56,6 @@ export async function GET(
 
     return NextResponse.json({ history })
   } catch (error) {
-    console.error('Failed to fetch edit history:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch edit history' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/edit/history', method: 'GET' })
   }
 }

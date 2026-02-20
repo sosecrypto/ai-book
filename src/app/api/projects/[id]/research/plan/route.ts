@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import { AIQuestion, UserAnswer } from '@/types/book'
@@ -81,10 +82,6 @@ ${qaContext}`
 
     return NextResponse.json({ summary: response })
   } catch (error) {
-    console.error('Failed to generate plan:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate plan' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/research/plan', method: 'POST' })
   }
 }

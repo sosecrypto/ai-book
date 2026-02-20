@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 
@@ -108,10 +109,6 @@ ${contentSummary}`
 
     return NextResponse.json({ evaluation })
   } catch (error) {
-    console.error('Failed to evaluate:', error)
-    return NextResponse.json(
-      { error: 'Failed to evaluate' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/review/evaluate', method: 'POST' })
   }
 }

@@ -16,7 +16,7 @@ vi.mock('@anthropic-ai/sdk', () => {
   }
 })
 
-import { runAgent, streamAgent, streamAgentWithHistory } from './claude'
+import { runAgent, streamAgent, streamAgentWithHistory, withRetry } from './claude'
 import type { AgentConfig } from './claude'
 
 const testConfig: AgentConfig = {
@@ -100,7 +100,7 @@ describe('streamAgent', () => {
         yield { type: 'message_stop' }
       },
     }
-    mockStream.mockResolvedValue(mockIterator)
+    mockStream.mockReturnValue(mockIterator)
 
     const result = await streamAgent(testConfig, 'Hi')
     expect(result).toBe('Hello World')
@@ -121,7 +121,7 @@ describe('streamAgent', () => {
         }
       },
     }
-    mockStream.mockResolvedValue(mockIterator)
+    mockStream.mockReturnValue(mockIterator)
 
     await streamAgent(testConfig, 'Hi', undefined, onChunk)
     expect(onChunk).toHaveBeenCalledWith('chunk1')
@@ -129,7 +129,7 @@ describe('streamAgent', () => {
   })
 
   it('context가 있으면 systemPrompt에 추가한다', async () => {
-    mockStream.mockResolvedValue({
+    mockStream.mockReturnValue({
       [Symbol.asyncIterator]: async function* () {},
     })
 
@@ -148,7 +148,7 @@ describe('streamAgentWithHistory', () => {
   })
 
   it('messages 배열을 전달한다', async () => {
-    mockStream.mockResolvedValue({
+    mockStream.mockReturnValue({
       [Symbol.asyncIterator]: async function* () {
         yield {
           type: 'content_block_delta',
@@ -170,5 +170,46 @@ describe('streamAgentWithHistory', () => {
         messages,
       })
     )
+  })
+})
+
+// withRetry tests use a patched version with 0 delay for fast testing
+describe('withRetry', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('성공 시 즉시 결과를 반환한다', async () => {
+    const fn = vi.fn().mockResolvedValue('success')
+    const result = await withRetry(fn, 0)
+    expect(result).toBe('success')
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
+  it('retryable 에러 시 재시도 후 성공한다', async () => {
+    const apiError = Object.assign(new Error('Rate limited'), { status: 429 })
+    const fn = vi.fn()
+      .mockRejectedValueOnce(apiError)
+      .mockResolvedValueOnce('success')
+
+    const result = await withRetry(fn, 1)
+    expect(result).toBe('success')
+    expect(fn).toHaveBeenCalledTimes(2)
+  })
+
+  it('최대 재시도 횟수 초과 시 에러를 던진다', async () => {
+    const apiError = Object.assign(new Error('Server error'), { status: 500 })
+    const fn = vi.fn().mockRejectedValue(apiError)
+
+    await expect(withRetry(fn, 0)).rejects.toThrow('Server error')
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
+  it('non-retryable 에러는 즉시 실패한다', async () => {
+    const apiError = Object.assign(new Error('Bad request'), { status: 400 })
+    const fn = vi.fn().mockRejectedValue(apiError)
+
+    await expect(withRetry(fn, 3)).rejects.toThrow('Bad request')
+    expect(fn).toHaveBeenCalledTimes(1)
   })
 })

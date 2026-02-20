@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import StageHeader from '@/components/project/StageHeader'
 import RichTextEditor from '@/components/RichTextEditor'
+import { sanitizeHtml } from '@/lib/sanitize'
 import { AIQuestion, UserAnswer } from '@/types/book'
 
 interface ResearchState {
@@ -821,7 +822,7 @@ export default function ResearchPage() {
                   </h3>
                   <div
                     className="prose prose-neutral dark:prose-invert max-w-none text-neutral-900 dark:text-neutral-100 prose-headings:text-neutral-900 dark:prose-headings:text-white prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-p:leading-relaxed prose-strong:text-neutral-900 dark:prose-strong:text-white prose-li:text-neutral-700 dark:prose-li:text-neutral-300"
-                    dangerouslySetInnerHTML={{ __html: state.researchSummary }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(state.researchSummary) }}
                   />
                 </div>
 

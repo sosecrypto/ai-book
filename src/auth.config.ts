@@ -11,7 +11,12 @@ export const authConfig = {
       const isPublicPath =
         nextUrl.pathname === '/' ||
         nextUrl.pathname.startsWith('/auth/') ||
-        nextUrl.pathname.startsWith('/api/auth/')
+        nextUrl.pathname.startsWith('/api/auth/') ||
+        nextUrl.pathname === '/api/health' ||
+        nextUrl.pathname === '/privacy' ||
+        nextUrl.pathname === '/terms' ||
+        nextUrl.pathname === '/features' ||
+        nextUrl.pathname === '/pricing'
 
       if (isPublicPath) return true
       if (isLoggedIn) return true

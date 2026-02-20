@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
@@ -270,10 +271,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: validation,
     })
   } catch (error) {
-    console.error('Bible validate error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Bible 검증에 실패했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/bible/validate', method: 'POST' })
   }
 }

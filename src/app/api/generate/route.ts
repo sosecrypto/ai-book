@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { runResearchAgent } from '@/agents/research'
 import { runOutlinerAgent, refineOutline, generateTableOfContents } from '@/agents/outliner'
 import { runWriterAgent } from '@/agents/writer'
@@ -137,10 +138,6 @@ ${originalText}
         return NextResponse.json({ error: 'Invalid phase' }, { status: 400 })
     }
   } catch (error) {
-    console.error('API Error:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'generate', method: 'POST' })
   }
 }

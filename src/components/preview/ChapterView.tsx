@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { marked } from 'marked'
+import { sanitizeHtml } from '@/lib/sanitize'
 import type { Chapter, ChapterOutline } from '@/types/book'
 
 // marked 설정
@@ -34,7 +35,7 @@ export function ChapterView({
 
   const renderedContent = useMemo(() => {
     if (!hasContent) return ''
-    return marked.parse(chapter!.content) as string
+    return sanitizeHtml(marked.parse(chapter!.content) as string)
   }, [chapter?.content, hasContent])
 
   return (

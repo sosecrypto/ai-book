@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import { EditSuggestion } from '@/types/book'
@@ -94,10 +95,6 @@ ${content.substring(0, 8000)}` // 토큰 제한
 
     return NextResponse.json({ suggestions })
   } catch (error) {
-    console.error('Failed to analyze:', error)
-    return NextResponse.json(
-      { error: 'Failed to analyze' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/edit/analyze', method: 'POST' })
   }
 }

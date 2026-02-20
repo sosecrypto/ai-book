@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 
 export async function GET(
@@ -32,11 +33,7 @@ export async function GET(
       }
     })
   } catch (error) {
-    console.error('Failed to fetch research data:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch research data' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/research', method: 'GET' })
   }
 }
 
@@ -93,10 +90,6 @@ export async function PUT(
       }
     })
   } catch (error) {
-    console.error('Failed to update research data:', error)
-    return NextResponse.json(
-      { error: 'Failed to update research data' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'projects/[id]/research', method: 'PUT' })
   }
 }

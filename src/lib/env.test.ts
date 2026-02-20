@@ -46,11 +46,13 @@ describe('env', () => {
     )
   })
 
-  it('should use default DATABASE_URL when not set', async () => {
+  it('should throw when DATABASE_URL is missing', async () => {
     ;(process.env as Record<string, string | undefined>).DATABASE_URL = undefined
     const { env } = await import('./env')
     resetEnv()
-    expect(env.DATABASE_URL).toBe('file:./prisma/dev.db')
+    expect(() => env.DATABASE_URL).toThrow(
+      'Environment variable validation failed'
+    )
   })
 
   it('should use default NODE_ENV when not set', async () => {

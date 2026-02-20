@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { handleApiError } from '@/lib/api-utils'
 import { parseBuffer, FileParseError } from '@/lib/file-parser'
 
 const ALLOWED_EXTENSIONS = ['txt', 'docx', 'pdf'] as const
@@ -76,10 +77,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error('File upload error:', error)
-    return NextResponse.json(
-      { success: false, error: '파일 처리 중 오류가 발생했습니다.' },
-      { status: 500 }
-    )
+    return handleApiError(error, { route: 'upload', method: 'POST' })
   }
 }

@@ -193,6 +193,6 @@ describe('POST /api/projects/[id]/research/quick-start', () => {
     )
     expect(response.status).toBe(500)
     const body = await response.json()
-    expect(body.error).toBe('Quick Start failed')
+    expect(body.error).toBe('Plan 실패')
   })
 })
