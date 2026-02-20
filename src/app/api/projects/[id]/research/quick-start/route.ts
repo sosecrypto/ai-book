@@ -109,7 +109,7 @@ export async function POST(
         `저자의 책 아이디어:\n${initialIdea}\n\n책 유형: ${project.type}`
       )
 
-      recordUsage(userId!, 'research-questioner', questionResult.usage, id).catch(console.error)
+      recordUsage(userId!, 'research-questioner', questionResult.usage, id).catch(() => {})
 
       const jsonMatch = questionResult.text.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -140,7 +140,7 @@ export async function POST(
         `저자의 책 아이디어:\n${initialIdea}\n\n책 유형: ${project.type}\n\n질문 목록:\n${questionsContext}`
       )
 
-      recordUsage(userId!, 'research-auto-answerer', answerResult.usage, id).catch(console.error)
+      recordUsage(userId!, 'research-auto-answerer', answerResult.usage, id).catch(() => {})
 
       const jsonMatch = answerResult.text.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -182,7 +182,7 @@ export async function POST(
       `**책 유형**: ${project.type}\n**초기 아이디어**: ${initialIdea}\n\n**질문과 답변**:\n${qaContext}`
     )
     const planResponse = planResult.text
-    recordUsage(userId!, 'research-planner', planResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'research-planner', planResult.usage, id).catch(() => {})
 
     // DB 저장
     await prisma.researchData.upsert({

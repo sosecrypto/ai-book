@@ -190,7 +190,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       `다음 챕터 ${chapterNumber}의 내용을 분석하세요:\n\n${content.substring(0, AI_CONTENT_LIMITS.EXTRACT_CONTENT)}`
     )
     const result = agentResult.text
-    recordUsage(userId!, 'bible-extractor', agentResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'bible-extractor', agentResult.usage, id).catch(() => {})
 
     if (isFiction) {
       const extraction = parseJSONFromText<FictionExtraction>(result, {

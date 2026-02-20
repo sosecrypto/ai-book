@@ -264,7 +264,7 @@ ${researchContext}
       userPrompt
     )
     const response = agentResult.text
-    recordUsage(userId!, 'outline-generator', agentResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'outline-generator', agentResult.usage, id).catch(() => {})
 
     // JSON 파싱
     let outline: BookOutline

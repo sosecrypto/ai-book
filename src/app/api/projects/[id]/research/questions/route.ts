@@ -71,7 +71,7 @@ export async function POST(
       `저자의 책 아이디어:\n${initialIdea}\n\n책 유형: ${project.type}`
     )
     const response = agentResult.text
-    recordUsage(userId!, 'research-questioner', agentResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'research-questioner', agentResult.usage, id).catch(() => {})
 
     // JSON 파싱
     let questions: AIQuestion[] = []
@@ -81,8 +81,7 @@ export async function POST(
         const parsed = JSON.parse(jsonMatch[0])
         questions = parsed.questions
       }
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError)
+    } catch {
       // 기본 질문 제공
       questions = [
         { id: 'q1', question: '이 책의 주요 독자층은 누구인가요?', category: 'audience', priority: 1 },

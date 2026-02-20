@@ -117,7 +117,7 @@ ${sanitizeForPrompt(instruction)}
           controller.error(error)
         } finally {
           if (usage.inputTokens > 0 || usage.outputTokens > 0) {
-            recordUsage(userId!, 'text-editor', usage, id).catch(console.error)
+            recordUsage(userId!, 'text-editor', usage, id).catch(() => {})
           }
         }
       },

@@ -80,7 +80,7 @@ export async function POST(
 ${contentSummary}`
     )
     const response = agentResult.text
-    recordUsage(userId!, 'critic', agentResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'critic', agentResult.usage, id).catch(() => {})
 
     // JSON 파싱
     let evaluation = {
@@ -97,8 +97,8 @@ ${contentSummary}`
       if (jsonMatch) {
         evaluation = JSON.parse(jsonMatch[0])
       }
-    } catch (parseError) {
-      console.error('Failed to parse evaluation:', parseError)
+    } catch {
+      // fallback: default evaluation
     }
 
     // 히스토리 저장

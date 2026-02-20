@@ -350,7 +350,7 @@ ${sanitizedCurrentContent}
           controller.error(error)
         } finally {
           if (usage.inputTokens > 0 || usage.outputTokens > 0) {
-            recordUsage(userId!, 'page-writer', usage, id).catch(console.error)
+            recordUsage(userId!, 'page-writer', usage, id).catch(() => {})
           }
         }
       },

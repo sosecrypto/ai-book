@@ -150,7 +150,7 @@ ${context?.pageNumber ? `- 페이지: ${context.pageNumber}` : ''}
           controller.error(error)
         } finally {
           if (usage.inputTokens > 0 || usage.outputTokens > 0) {
-            recordUsage(userId!, 'writing-assistant', usage, projectId).catch(console.error)
+            recordUsage(userId!, 'writing-assistant', usage, projectId).catch(() => {})
           }
         }
       }

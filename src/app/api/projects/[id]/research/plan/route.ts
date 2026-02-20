@@ -68,7 +68,7 @@ export async function POST(
 ${qaContext}`
     )
     const response = agentResult.text
-    recordUsage(userId!, 'research-planner', agentResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'research-planner', agentResult.usage, id).catch(() => {})
 
     // ResearchData 업데이트
     await prisma.researchData.update({

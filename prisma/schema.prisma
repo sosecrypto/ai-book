@@ -88,6 +88,8 @@ model Project {
   sources        Source[]
   snapshots      ProjectSnapshot[]
   agentConfig    String?       // JSON: AgentCustomConfig
+
+  @@index([userId, updatedAt])
 }
 
 model SourceFile {

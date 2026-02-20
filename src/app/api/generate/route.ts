@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         }
         const research = await runResearchAgent(bookType, `${title}: ${description}`)
         const usage = extractUsage(research)
-        if (usage) recordUsage(userId!, 'research', usage).catch(console.error)
+        if (usage) recordUsage(userId!, 'research', usage).catch(() => {})
         return NextResponse.json({ research })
       }
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         const { bookType, title, description, research } = body
         const outline = await runOutlinerAgent(bookType, title, description, research)
         const usage = extractUsage(outline)
-        if (usage) recordUsage(userId!, 'outliner', usage).catch(console.error)
+        if (usage) recordUsage(userId!, 'outliner', usage).catch(() => {})
         const toc = generateTableOfContents(title, outline)
         return NextResponse.json({ outline, toc })
       }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         const { outline, feedback, title } = body as { outline: BookOutline; feedback: OutlineFeedback; title: string }
         const refinedOutline = await refineOutline(outline, feedback)
         const usage = extractUsage(refinedOutline)
-        if (usage) recordUsage(userId!, 'outliner-refine', usage).catch(console.error)
+        if (usage) recordUsage(userId!, 'outliner-refine', usage).catch(() => {})
         const toc = generateTableOfContents(title || 'Untitled', refinedOutline)
         return NextResponse.json({ outline: refinedOutline, toc })
       }
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       case 'write': {
         const { bookType, outline, chapter } = body
         const result = await runWriterAgentWithUsage(bookType, outline, chapter)
-        recordUsage(userId!, 'writer', result.usage).catch(console.error)
+        recordUsage(userId!, 'writer', result.usage).catch(() => {})
         return NextResponse.json({ content: result.text })
       }
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         const { content, chapterTitle, tone } = body
         const result = await runEditorAgent(content, chapterTitle, tone)
         const usage = extractUsage(result)
-        if (usage) recordUsage(userId!, 'editor', usage).catch(console.error)
+        if (usage) recordUsage(userId!, 'editor', usage).catch(() => {})
         return NextResponse.json(result)
       }
 
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         const { content, chapterTitle, targetAudience, tone } = body
         const result = await runCriticAgent(content, chapterTitle, targetAudience, tone)
         const usage = extractUsage(result)
-        if (usage) recordUsage(userId!, 'critic', usage).catch(console.error)
+        if (usage) recordUsage(userId!, 'critic', usage).catch(() => {})
         return NextResponse.json(result)
       }
 
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             { maxIterations, passThreshold }
           )
           const usage = extractUsage(result)
-          if (usage) recordUsage(userId!, 'editor-critic-loop', usage).catch(console.error)
+          if (usage) recordUsage(userId!, 'editor-critic-loop', usage).catch(() => {})
           return NextResponse.json(result)
         } else {
           const result = await runSinglePassEditorCritic(
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
             tone
           )
           const usage = extractUsage(result)
-          if (usage) recordUsage(userId!, 'editor-critic', usage).catch(console.error)
+          if (usage) recordUsage(userId!, 'editor-critic', usage).catch(() => {})
           return NextResponse.json(result)
         }
       }
@@ -154,7 +154,7 @@ ${originalText}
         const { runEditorAgent } = await import('@/agents/editor')
         const result = await runEditorAgent(prompt, 'inline-edit', '')
         const usage = extractUsage(result)
-        if (usage) recordUsage(userId!, 'inline-editor', usage).catch(console.error)
+        if (usage) recordUsage(userId!, 'inline-editor', usage).catch(() => {})
 
         return NextResponse.json({
           original: originalText,

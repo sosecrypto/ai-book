@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
             }
           )
 
-          recordUsage(userId!, 'stream-writer', result.usage).catch(console.error)
+          recordUsage(userId!, 'stream-writer', result.usage).catch(() => {})
 
           sendEvent('complete', {
             chapterNumber: chapter.number,

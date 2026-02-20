@@ -466,7 +466,7 @@ ${writeInstruction}`
           controller.error(error)
         } finally {
           if (usage.inputTokens > 0 || usage.outputTokens > 0) {
-            recordUsage(userId!, 'chapter-writer', usage, id).catch(console.error)
+            recordUsage(userId!, 'chapter-writer', usage, id).catch(() => {})
           }
         }
       }

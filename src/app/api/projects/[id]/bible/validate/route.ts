@@ -268,7 +268,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       issues: [],
       summary: '검증을 완료할 수 없습니다.',
     })
-    recordUsage(userId!, 'bible-validator', agentResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'bible-validator', agentResult.usage, id).catch(() => {})
 
     return NextResponse.json({
       success: true,

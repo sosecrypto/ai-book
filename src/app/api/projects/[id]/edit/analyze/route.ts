@@ -84,7 +84,7 @@ export async function POST(
 ${content.substring(0, 8000)}` // 토큰 제한
     )
     const response = agentResult.text
-    recordUsage(userId!, 'editor', agentResult.usage, id).catch(console.error)
+    recordUsage(userId!, 'editor', agentResult.usage, id).catch(() => {})
 
     // JSON 파싱
     let suggestions: EditSuggestion[] = []
@@ -94,8 +94,8 @@ ${content.substring(0, 8000)}` // 토큰 제한
         const parsed = JSON.parse(jsonMatch[0])
         suggestions = parsed.suggestions || []
       }
-    } catch (parseError) {
-      console.error('Failed to parse editor response:', parseError)
+    } catch {
+      // fallback: empty suggestions
     }
 
     return NextResponse.json({ suggestions })
