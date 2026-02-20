@@ -133,7 +133,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({ error: 'Invalid request', details: error.errors }),
+        JSON.stringify({ error: 'Invalid request', details: error.issues }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
     }
