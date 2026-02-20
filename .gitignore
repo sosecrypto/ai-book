@@ -49,6 +49,7 @@ prisma/dev.db
 prisma/dev.db-journal
 prisma/test-e2e.db*
 prisma/prisma/
+src/generated/
 
 # Playwright
 e2e/.auth/

@@ -22,7 +22,8 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@auth/prisma-adapter": "^2.11.1",
     "@heroicons/react": "^2.2.0",
-    "@prisma/client": "^5.22.0",
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/client": "^7.4.1",
     "@react-pdf/renderer": "^4.3.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
@@ -82,7 +83,7 @@
     "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.6",
     "jsdom": "^28.1.0",
-    "prisma": "^5.22.0",
+    "prisma": "^7.4.1",
     "vitest": "^4.0.18",
     "vitest-axe": "^0.1.0"
   }
