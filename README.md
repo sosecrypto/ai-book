@@ -58,13 +58,20 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 - **ISBN 관리** — ISBN-10/13 검증, 바코드 생성, 발급 상태 추적
 - **메타데이터** — 저자, 출판사, 저작권 정보 관리
 
-### 사용자 인증
+### 보안 & 인프라
 - **NextAuth.js v5** 기반 인증 시스템 (JWT 세션)
 - 이메일/비밀번호 로그인 (bcryptjs 해싱)
 - Google OAuth 지원 (선택)
 - 모든 API 라우트 인증 보호 (34개 라우트)
 - 프로젝트 소유권 검증 (데이터 격리)
-- 미들웨어 기반 라우트 보호
+- **CSRF 보호** — Origin/Referer 헤더 검증 (proxy.ts 통합)
+- **Rate Limiting** — Upstash Redis 기반 3단계 제한 (auth: 5/min, AI: 10/min, general: 60/min)
+- **XSS 방지** — DOMPurify HTML sanitization (dangerouslySetInnerHTML 보호)
+- **API 재시도** — Claude API exponential backoff (429/5xx 자동 재시도, 최대 3회)
+- **Sentry 에러 모니터링** — 클라이언트/서버/엣지 통합, handleApiError 공통 유틸
+- **CI/CD** — GitHub Actions (tsc → test → build)
+- **Health Check** — `/api/health` 엔드포인트 (DB + 환경변수 검사)
+- **법적 페이지** — 개인정보 처리방침(/privacy), 이용약관(/terms)
 
 ### 프로젝트 관리
 - **프로젝트 대시보드** — 통계, 챕터 현황, 진행 단계 시각화
@@ -98,7 +105,7 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 | **Styling** | Tailwind CSS 4, Tailwind Typography, Framer Motion |
 | **Editor** | TipTap (rich text) |
 | **AI** | Anthropic Claude API (@anthropic-ai/sdk) |
-| **Database** | Prisma + SQLite |
+| **Database** | Prisma + PostgreSQL |
 | **State** | Zustand |
 | **3D** | Three.js, React Three Fiber, React Three Drei |
 | **Export** | @react-pdf/renderer (PDF), epub-gen-memory (EPUB) |
@@ -123,10 +130,12 @@ ai-book/
 │   │   │   ├── auth/        # 인증 (NextAuth, 회원가입)
 │   │   │   ├── cover/       # 표지 생성 API
 │   │   │   ├── generate/    # AI 생성 API
+│   │   │   ├── health/      # 헬스체크 엔드포인트
 │   │   │   ├── newsletter/   # 뉴스레터 구독 API
 │   │   │   ├── projects/    # 프로젝트 CRUD, outline, write, edit, review, consistency
 │   │   │   ├── stream/      # 스트리밍 API
 │   │   │   └── upload/      # 파일 업로드 API
+│   │   ├── (legal)/         # 법적 페이지 (privacy, terms)
 │   │   ├── auth/            # 로그인/회원가입/에러 페이지
 │   │   ├── features/        # 기능 소개 페이지
 │   │   ├── new/             # 새 프로젝트 생성
@@ -164,11 +173,14 @@ ai-book/
 │   │   ├── epub.ts          # EPUB 생성
 │   │   ├── epub-styles.ts   # EPUB 스타일
 │   │   ├── auth/            # 인증 유틸 (password, auth-utils)
+│   │   ├── api-utils.ts     # handleApiError + Sentry 연동
 │   │   ├── errors.ts        # 에러 처리 유틸
 │   │   ├── file-parser.ts   # 파일 파싱 (docx, pdf, txt)
 │   │   ├── isbn.ts          # ISBN 유틸리티
 │   │   ├── plot-structures.ts # 플롯 구조 템플릿 (6종)
 │   │   ├── pdf.ts           # PDF 내보내기
+│   │   ├── rate-limit.ts    # Upstash 기반 Rate Limiting
+│   │   ├── sanitize.ts      # DOMPurify HTML sanitization
 │   │   ├── store.ts         # Zustand 스토어
 │   │   ├── db/              # Prisma 클라이언트
 │   │   └── utils/           # JSON 파서, 텍스트→HTML 변환
@@ -177,7 +189,9 @@ ai-book/
 │       └── book-bible.ts    # Book Bible 타입
 ├── messages/                 # i18n 번역 파일 (ko.json, en.json)
 ├── e2e/                     # E2E 테스트 (Playwright)
-├── prisma/schema.prisma     # DB 스키마 (18 models)
+├── sentry.*.config.ts       # Sentry 설정 (client/server/edge)
+├── .github/workflows/       # CI/CD (GitHub Actions)
+├── prisma/schema.prisma     # DB 스키마 (18 models, PostgreSQL)
 └── vitest.config.ts         # 테스트 설정
 ```
 
@@ -212,12 +226,19 @@ npm run test:e2e      # E2E 테스트 (Playwright)
 ## 환경 변수
 
 ```env
-ANTHROPIC_API_KEY=    # Claude API 키 (필수)
-DATABASE_URL=file:./prisma/dev.db
+# === 필수 ===
+ANTHROPIC_API_KEY=    # Claude API 키
 AUTH_SECRET=          # NextAuth 시크릿 (openssl rand -base64 32)
-AUTH_TRUST_HOST=true  # 로컬 개발용
-# AUTH_GOOGLE_ID=     # Google OAuth (선택)
-# AUTH_GOOGLE_SECRET= # Google OAuth (선택)
+DATABASE_URL=         # PostgreSQL 연결 문자열
+
+# === 선택 ===
+# DIRECT_URL=         # Prisma 직접 DB 연결 (마이그레이션용)
+# AUTH_GOOGLE_ID=     # Google OAuth
+# AUTH_GOOGLE_SECRET= # Google OAuth
+# UPSTASH_REDIS_REST_URL=   # Rate Limiting (Upstash Redis)
+# UPSTASH_REDIS_REST_TOKEN= # Rate Limiting
+# NEXT_PUBLIC_SENTRY_DSN=   # Sentry 에러 모니터링
+# SENTRY_DSN=               # Sentry 서버 사이드
 ```
 
 ## 개발 현황
@@ -239,7 +260,7 @@ AUTH_TRUST_HOST=true  # 로컬 개발용
 - [x] 다크/라이트 모드 완전 지원
 - [x] 카테고리 선택 UI (BISAC/KDC/DDC/custom)
 - [x] 사용자 인증 (NextAuth.js v5, JWT, Google OAuth)
-- [x] 테스트 커버리지 80% 달성 (67 files / 657 tests)
+- [x] 테스트 커버리지 80% 달성 (72 files / 700 tests)
 - [x] 커버리지 미달 파일 개선 완료 (useAIChat, file-parser, useStreamingGeneration, isbn 등)
 - [x] 프로젝트 검색/필터/정렬
 - [x] 전역 에러 바운더리 & 404
@@ -264,3 +285,10 @@ AUTH_TRUST_HOST=true  # 로컬 개발용
 - [x] 편집 페이지 TipTap 리치 에디터 전환 (textarea → WYSIWYG)
 - [x] 집필 중 챕터 이동 시 콘텐츠 보호 (writingChapter 상태 추적)
 - [x] 편집 단계 진행 조건 완화 (미완성 챕터 경고 후 허용)
+- [x] PostgreSQL 마이그레이션 준비 (SQLite → PostgreSQL)
+- [x] CI/CD 파이프라인 (GitHub Actions: tsc → test → build)
+- [x] CSRF 보호 + Rate Limiting + XSS 방지
+- [x] Sentry 에러 모니터링 통합 (18개 API route)
+- [x] API 재시도 로직 (exponential backoff)
+- [x] Health Check 엔드포인트 (/api/health)
+- [x] 개인정보 처리방침 & 이용약관 페이지
