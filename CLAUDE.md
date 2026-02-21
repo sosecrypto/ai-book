@@ -89,6 +89,7 @@ ai-book/
 │   └── types/
 │       ├── book.ts          # Domain type definitions
 │       └── book-bible.ts    # Book Bible types
+│   └── proxy.ts              # NextAuth v5 auth + CSRF + rate limit (Next.js 16 proxy)
 ├── messages/                # i18n translation files (ko.json, en.json)
 ├── e2e/                     # E2E tests (Playwright)
 ├── sentry.*.config.ts       # Sentry config (client/server/edge)

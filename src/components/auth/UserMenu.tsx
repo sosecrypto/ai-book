@@ -29,7 +29,7 @@ export default function UserMenu() {
     return (
       <Link
         href="/auth/login"
-        className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white font-medium hover:bg-blue-700 transition-colors"
+        className="rounded-sm px-4 py-2 text-sm font-medium tracking-wide text-brown dark:text-warm-gray hover:text-deep-brown dark:hover:text-cream-light transition-colors"
       >
         로그인
       </Link>
@@ -44,7 +44,7 @@ export default function UserMenu() {
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/20 text-gold-dim text-sm font-medium hover:bg-gold/30 border border-gold/30 transition-colors"
         aria-label="사용자 메뉴"
       >
         {session.user.image ? (
@@ -60,12 +60,12 @@ export default function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-56 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg z-50">
-          <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
-            <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+        <div className="absolute right-0 mt-2 w-56 rounded-sm border border-stone/20 dark:border-cream/10 bg-cream dark:bg-ink shadow-lg z-50">
+          <div className="px-4 py-3 border-b border-stone/10 dark:border-cream/10">
+            <p className="text-sm font-medium text-ink dark:text-cream truncate">
               {session.user.name || '사용자'}
             </p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+            <p className="text-xs text-stone dark:text-warm-gray truncate">
               {session.user.email}
             </p>
           </div>
@@ -75,7 +75,7 @@ export default function UserMenu() {
                 setOpen(false)
                 signOut({ callbackUrl: '/' })
               }}
-              className="w-full text-left px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              className="w-full text-left px-4 py-2 text-sm text-brown dark:text-warm-gray hover:bg-gold/10 hover:text-deep-brown dark:hover:text-cream transition-colors"
             >
               로그아웃
             </button>

@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import FloatingBookThree from '@/components/FloatingBookThree'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import NewsletterForm from '@/components/landing/NewsletterForm'
+import UserMenu from '@/components/auth/UserMenu'
 
 // ============================================================================
 // Static Data (visual properties only — text comes from translations)
@@ -128,6 +129,7 @@ function Navigation() {
           </Link>
           <LanguageSwitcher />
           <ThemeToggle />
+          <UserMenu />
           <Link href="/new" className="cta-button text-sm py-2 px-5">
             {t('nav.start')}
           </Link>

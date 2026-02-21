@@ -68,6 +68,7 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 
 ### 보안 & 인프라
 - **NextAuth.js v5** 기반 인증 시스템 (JWT 세션)
+- **Auth Middleware** — 비인증 사용자 자동 리다이렉트 (`/auth/login`), public/protected 경로 구분
 - 이메일/비밀번호 로그인 (bcryptjs 해싱)
 - Google OAuth 지원 (선택)
 - 모든 API 라우트 인증 보호 (34개 라우트)
@@ -194,6 +195,7 @@ ai-book/
 │   │   ├── store.ts         # Zustand 스토어
 │   │   ├── db/              # Prisma 클라이언트
 │   │   └── utils/           # JSON 파서, 텍스트→HTML 변환
+│   ├── proxy.ts              # NextAuth v5 인증 + CSRF + Rate Limit (Next.js 16 proxy)
 │   └── types/
 │       ├── book.ts          # 도메인 타입 정의
 │       └── book-bible.ts    # Book Bible 타입
@@ -270,7 +272,7 @@ DATABASE_URL=         # PostgreSQL 연결 문자열
 - [x] 다크/라이트 모드 완전 지원
 - [x] 카테고리 선택 UI (BISAC/KDC/DDC/custom)
 - [x] 사용자 인증 (NextAuth.js v5, JWT, Google OAuth)
-- [x] 테스트 커버리지 80% 달성 (95 files / 888 tests)
+- [x] 테스트 커버리지 80% 달성 (98 files / 925 tests)
 - [x] 커버리지 미달 파일 개선 완료 (useAIChat, file-parser, useStreamingGeneration, isbn 등)
 - [x] 프로젝트 검색/필터/정렬
 - [x] 전역 에러 바운더리 & 404
@@ -306,3 +308,4 @@ DATABASE_URL=         # PostgreSQL 연결 문자열
 - [x] 회원가입 in-memory rate limit (3회/10분)
 - [x] 프로젝트 소유권 검증 강화 (전체 AI 라우트)
 - [x] 의존성 메이저 업그레이드 (Prisma 5→7, Zod 3→4, OpenAI SDK 4→6)
+- [x] 인증 미들웨어 + 로그인 UX 개선 (경로 보호, 네비게이션 UserMenu)
